@@ -76,7 +76,7 @@ If `AGENTS.md` already exists, improve it in place rather than rewriting blindly
 
 Inicializa la memoria global y la del proyecto con el mecanismo idempotente de `/integral-learn`. El comando ejecutó antes de esta solicitud el inicializador y reportó:
 
-!`python3 "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands/integral-learn-init.py"`
+!`bash -c 'python3 "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands/integral-learn-init.py"'`
 
 Toma esa salida como evidencia del resultado: no vuelvas a ejecutar ni afirmes éxito si reportó errores. Respeta cualquier archivo existente; no copies preferencias entre memorias ni agregues preferencias por el usuario durante una inicialización.
 

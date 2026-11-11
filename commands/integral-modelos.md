@@ -9,10 +9,10 @@ Realiza una evaluación de modelos para este proyecto y guarda el resultado en s
 ## Datos de OpenCode
 
 Favoritos configurados por el usuario:
-!`python3 -c 'import json,os; p=os.path.join(os.environ.get("XDG_STATE_HOME",os.path.expanduser("~/.local/state")),"opencode/model.json"); d=json.load(open(p)); print(json.dumps(d.get("favorite",[]),ensure_ascii=False,indent=2))'`
+!`bash -c 'python3 -c "import json,os; p=os.path.join(os.environ.get(\"XDG_STATE_HOME\",os.path.expanduser(\"~/.local/state\")),\"opencode/model.json\"); d=json.load(open(p)); print(json.dumps(d.get(\"favorite\",[]),ensure_ascii=False,indent=2))"'`
 
 Modelos y variantes disponibles en esta ubicación:
-!`opencode api get /api/model`
+!`bash -c 'opencode api get /api/model'`
 
 ## Evaluación
 
