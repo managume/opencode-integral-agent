@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 
 root, cfg = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
-assets = ["agents/integral.md", "commands/integral-modelos.md", "commands/integral-learn.md", "commands/integral-learn-init.py",
+assets = ["agents/integral.md", "commands/integral-modelos.md", "commands/integral-learn.md", "commands/integral-init.md", "commands/integral-learn-init.py",
           "plugins/integral-model-switch", "plugins/integral-sidebar"]
 backup = cfg / ".integral-backups" / datetime.now().strftime("%Y%m%d-%H%M%S")
 made_backup = False
@@ -122,5 +122,5 @@ merge_config(json_files[0] if json_files else "opencode.jsonc",server)
 merge_config("cli.json",cli)
 print(f"Integral instalado en {cfg}")
 if made_backup: print(f"Archivos reemplazados respaldados en {backup}")
-print("Recarga OpenCode para activar los plugins. Usa /integral-modelos y /integral-sidebar.")
+print("OpenCode recarga los comandos automáticamente; si no aparece /integral-init, usa /reload. Ejecuta /integral-init para preparar el proyecto.")
 PY

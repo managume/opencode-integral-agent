@@ -9,6 +9,7 @@
 !commands/
 !commands/integral-modelos.md
 !commands/integral-learn.md
+!commands/integral-init.md
 !commands/integral-learn-init.py
 !plugins/
 !plugins/integral-model-switch/

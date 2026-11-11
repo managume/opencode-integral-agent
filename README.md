@@ -6,7 +6,9 @@ Integral es un paquete para habilitar un agente de OpenCode, memorias de colabor
 
 ### Agente Integral
 
-`agents/integral.md` define el flujo de colaboración del agente. El comando `/integral-modelos` evalúa los favoritos disponibles, consulta Artificial Analysis cuando es accesible y crea o actualiza desde cero la sección delimitada en `AGENTS.md` del proyecto activo. Las asignaciones no se distribuyen con el paquete. El plugin `plugins/integral-model-switch/` proporciona `set_integral_phase` para aplicar la tabla de ese proyecto.
+`agents/integral.md` define el flujo de colaboración del agente. Si el proyecto no tiene tabla de modelos o una fase no está asignada, Integral conserva el modelo seleccionado y continúa sin exigir una evaluación. `/integral-modelos` evalúa favoritos disponibles y crea o actualiza la sección delimitada en `AGENTS.md` del proyecto activo. El plugin `plugins/integral-model-switch/` aplica las asignaciones definidas cuando existen.
+
+`/integral-init` combina el análisis guiado de proyecto de `/init` con la creación/actualización cuidadosa de `AGENTS.md`, inicialización LEARN y evaluación de modelos. No reemplaza contenido existente del usuario fuera de la sección de modelos.
 
 ### Memorias LEARN
 
@@ -23,7 +25,7 @@ Cada memoria la genera el comando en el destino del usuario; este repositorio no
 
 ### Instalador
 
-`install.sh` enlaza agente, comandos y plugins y fusiona solo los ajustes de activación necesarios en la configuración OpenCode que ya exista. No instala memorias ni asignaciones generadas: inicialízalas después con `/integral-learn` y `/integral-modelos`.
+`install.sh` enlaza agente, comandos y plugins y fusiona solo los ajustes de activación necesarios en la configuración OpenCode que ya exista. No instala memorias ni asignaciones generadas: inicialízalas con `/integral-init` (todo junto), o por separado con `/integral-learn` y `/integral-modelos`.
 
 ## Requisitos
 
@@ -49,8 +51,8 @@ El instalador conserva los ajustes ajenos, registra las rutas global y local de 
 
 Tras instalar, recarga OpenCode y ejecuta desde cada proyecto:
 
-1. `/integral-learn` para inicializar ambas memorias vacías si faltan.
-2. `/integral-modelos` para generar las asignaciones de modelos de ese proyecto.
+1. `/integral-init` para inspeccionar el proyecto, preparar `AGENTS.md`, inicializar memorias ausentes y generar asignaciones.
+2. Si solo necesitas una parte: `/integral-learn` inicializa las memorias y `/integral-modelos` actualiza únicamente la tabla.
 
 Elige Integral como agente principal. Usa `/integral-sidebar` para mostrar u ocultar el addon.
 
