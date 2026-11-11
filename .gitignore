@@ -4,10 +4,6 @@
 !.gitignore
 !README.md
 !install.sh
-!AGENTS.md
-!LEARN.md
-!opencode.jsonc
-!cli.json
 !agents/
 !agents/integral.md
 !commands/
