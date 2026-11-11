@@ -1,0 +1,7 @@
+{
+  "name": "integral-sidebar",
+  "type": "module",
+  "exports": {
+    "./tui": "./tui.tsx"
+  }
+}

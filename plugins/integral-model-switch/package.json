@@ -1,0 +1,7 @@
+{
+  "name": "integral-model-switch",
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": [
+    {
+      "package": "./plugins/integral-sidebar"
+    }
+  ],
+  "diffs": {
+    "wrap": "word"
+  },
+  "session": {
+    "sidebar": "auto",
+    "scrollbar": false,
+    "thinking": "show",
+    "new_location": "inherit"
+  },
+  "animations": true,
+  "theme": {
+    "name": "tokyonight"
+  },
+  "tabs": {
+    "layout": "horizontal",
+    "scope": "cwd"
+  }
+}

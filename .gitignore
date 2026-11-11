@@ -1,0 +1,52 @@
+# Lista permitida: solo se versionan los archivos Integral enumerados abajo.
+# Todo archivo nuevo queda excluido por defecto hasta que se revise y permita.
+*
+!.gitignore
+!README.md
+!install.sh
+!AGENTS.md
+!LEARN.md
+!opencode.jsonc
+!cli.json
+!agents/
+!agents/integral.md
+!commands/
+!commands/integral-modelos.md
+!plugins/
+!plugins/integral-model-switch/
+!plugins/integral-model-switch/package.json
+!plugins/integral-model-switch/index.js
+!plugins/integral-sidebar/
+!plugins/integral-sidebar/package.json
+!plugins/integral-sidebar/tui.tsx
+
+# Defensa explícita para secretos, datos locales y credenciales accidentales.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*secret*
+*credential*
+*token*
+*api-key*
+*apikey*
+
+# Dependencias, cachés, artefactos y archivos locales.
+node_modules/
+vendor/
+dist/
+build/
+coverage/
+.cache/
+.tmp/
+tmp/
+*.log
+*.bak
+*.backup
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
