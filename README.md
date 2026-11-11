@@ -8,6 +8,7 @@ Integral es un agente de OpenCode con flujo de colaboración por fases, memoria 
 - `LEARN.md`: memoria global de colaboración, instalada en la configuración del usuario.
 - `.opencode/LEARN.md`: memoria local opcional, creada y mantenida en cada proyecto; no se incluye en este paquete ni se copia entre proyectos.
 - `commands/integral-modelos.md`: comando `/integral-modelos`; evalúa favoritos disponibles, consulta Artificial Analysis cuando hay datos, y actualiza siempre la sección delimitada de `AGENTS.md` del proyecto activo.
+- `commands/integral-learn.md`: comando `/integral-learn`; crea solo las memorias ausentes, tanto global como del proyecto, sin alterar las existentes.
 - `plugins/integral-model-switch/`: plugin servidor que proporciona `set_integral_phase`.
 - `plugins/integral-sidebar/`: plugin TUI con asignaciones y memorias, encabezados plegables y comando `/integral-sidebar` para mostrar/ocultar el addon.
 - `opencode.jsonc` y `cli.json`: configuración activa de esta instancia de referencia. El instalador no copia estos archivos tal cual: mezcla solo los ajustes necesarios en la configuración destino.
@@ -42,9 +43,10 @@ Tras instalar, inicia o recarga OpenCode. Para desinstalar, elimina las entradas
 ## Uso
 
 1. Selecciona `integral` como agente principal.
-2. Ejecuta `/integral-modelos` desde el proyecto para evaluar modelos favoritos y refrescar la sección `MODELS-PROJECT` del `AGENTS.md` raíz de ese proyecto.
-3. El agente consulta esa tabla para cambiar entre las fases `analysis` y `development`; el plugin valida que modelo/variante estén disponibles.
-4. Usa `/integral-sidebar` para alternar el addon. Haz clic en cada encabezado para plegar o desplegar su sección.
+2. Ejecuta `/integral-learn` para inicializar ambas memorias si faltan; conserva intactas las que ya existan.
+3. Ejecuta `/integral-modelos` desde el proyecto para evaluar modelos favoritos y refrescar la sección `MODELS-PROJECT` del `AGENTS.md` raíz de ese proyecto.
+4. El agente consulta esa tabla para cambiar entre las fases `analysis` y `development`; el plugin valida que modelo/variante estén disponibles.
+5. Usa `/integral-sidebar` para alternar el addon. Haz clic en cada encabezado para plegar o desplegar su sección.
 
 ## Memorias global y por proyecto
 
