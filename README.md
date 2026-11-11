@@ -5,7 +5,8 @@ Integral es un agente de OpenCode con flujo de colaboración por fases, memoria 
 ## Contenido
 
 - `agents/integral.md`: flujo de trabajo del agente y uso de memorias y asignaciones por fase.
-- `LEARN.md`: memoria global de colaboración.
+- `LEARN.md`: memoria global de colaboración, instalada en la configuración del usuario.
+- `.opencode/LEARN.md`: memoria local opcional, creada y mantenida en cada proyecto; no se incluye en este paquete ni se copia entre proyectos.
 - `commands/integral-modelos.md`: comando `/integral-modelos`; evalúa favoritos disponibles, consulta Artificial Analysis cuando hay datos, y actualiza siempre la sección delimitada de `AGENTS.md` del proyecto activo.
 - `plugins/integral-model-switch/`: plugin servidor que proporciona `set_integral_phase`.
 - `plugins/integral-sidebar/`: plugin TUI con asignaciones y memorias, encabezados plegables y comando `/integral-sidebar` para mostrar/ocultar el addon.
@@ -34,7 +35,7 @@ El destino por defecto es `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. El insta
 OPENCODE_CONFIG_DIR=/ruta/a/otra/config/opencode ./install.sh
 ```
 
-El instalador enlaza los recursos del paquete, por lo que mantener el repositorio disponible es necesario. Añade las instrucciones y entradas de plugins de Integral sin reemplazar claves ajenas en `opencode.jsonc` y `cli.json`. Si una ruta de recurso ya existe y no apunta al paquete, la respalda bajo `.integral-backups/` y la sustituye por el enlace. Las configuraciones JSONC se fusionan y se escriben como JSON válido. La instalación es idempotente. Revisa el directorio de respaldos antes de borrar cualquier copia.
+El instalador enlaza los recursos del paquete, por lo que mantener el repositorio disponible es necesario. Añade las instrucciones y entradas de plugins de Integral sin reemplazar claves ajenas en `opencode.jsonc` y `cli.json`. Registra ambas rutas de memoria: el `LEARN.md` global del directorio de configuración y `.opencode/LEARN.md` relativo a cada proyecto. Solo instala la memoria global: no crea, copia ni reemplaza la memoria local de ningún proyecto. Si una ruta de recurso ya existe y no apunta al paquete, la respalda bajo `.integral-backups/` y la sustituye por el enlace. Las configuraciones JSONC se fusionan y se escriben como JSON válido. La instalación es idempotente. Revisa el directorio de respaldos antes de borrar cualquier copia.
 
 Tras instalar, inicia o recarga OpenCode. Para desinstalar, elimina las entradas específicas de Integral de ambas configuraciones y los enlaces de Integral en el destino; no borres archivos de respaldo sin revisarlos. El paquete original permanece intacto.
 
@@ -45,7 +46,14 @@ Tras instalar, inicia o recarga OpenCode. Para desinstalar, elimina las entradas
 3. El agente consulta esa tabla para cambiar entre las fases `analysis` y `development`; el plugin valida que modelo/variante estén disponibles.
 4. Usa `/integral-sidebar` para alternar el addon. Haz clic en cada encabezado para plegar o desplegar su sección.
 
-El sidebar presenta, en este orden, modelos por fase, `.opencode/LEARN.md` del proyecto y `LEARN.md` global. Las memorias específicas permanecen dentro de cada proyecto y no son desplegadas ni sustituidas por el instalador.
+## Memorias global y por proyecto
+
+Integral trabaja con **dos memorias distintas**:
+
+- **Global:** `~/.config/opencode/LEARN.md` (o `$XDG_CONFIG_HOME/opencode/LEARN.md`). Este repositorio contiene la memoria global; el instalador la enlaza en la configuración elegida.
+- **Del proyecto:** `<raíz-del-proyecto>/.opencode/LEARN.md`. Es opcional y pertenece al proyecto: créala cuando haya preferencias locales que recordar. No forma parte del paquete ni la crea el instalador. Si existe, OpenCode la carga junto a la global; las instrucciones explícitas prevalecen y, entre memorias, la local prevalece cuando hay conflicto.
+
+El sidebar presenta, en este orden, modelos por fase, la memoria del proyecto activo y la memoria global. Si aún no existe `.opencode/LEARN.md`, la sección del proyecto lo indica; la memoria global sigue disponible.
 
 ## Evaluación de modelos y evidencia
 
