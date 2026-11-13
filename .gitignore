@@ -11,6 +11,7 @@
 !commands/integral-learn.md
 !commands/integral-init.md
 !commands/integral-learn-init.py
+!commands/integral-modelos-data.py
 !plugins/
 !plugins/integral-model-switch/
 !plugins/integral-model-switch/package.json

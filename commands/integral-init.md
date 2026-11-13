@@ -4,9 +4,27 @@ agent: integral
 subagent: false
 ---
 
-Inicializa el proyecto activo. Esta primera sección reproduce el flujo guiado de `/init` de OpenCode; las secciones siguientes añaden la inicialización de Integral. Completa todos los pasos en esta ejecución; no te limites a explicar qué habría que hacer.
+Prepara el proyecto activo para que pueda desarrollarse con Integral. Esta primera sección reproduce el flujo guiado de `/init` de OpenCode; las secciones siguientes completan su preparación con Git, planificación y funciones de Integral. No generes código de aplicación ni instales dependencias.
 
-## 1. Instrucciones del proyecto (flujo de `/init`)
+## 0. Proyecto vacío
+
+Inspecciona primero la raíz activa. Si no hay código, documentación del proyecto, especificaciones, planificación ni instrucciones sustantivas que permitan identificar su propósito, todavía no inicialices archivos ni Git: pregunta con la interfaz nativa si el usuario quiere inicializar el proyecto y espera su respuesta.
+
+- Si responde que no, termina sin cambios.
+- Si responde que sí pero no ha indicado el objetivo del proyecto, pregunta en un único lote breve por propósito, resultado esperado, restricciones y cualquier tecnología que ya haya elegido. Espera antes de crear archivos; no deduzcas stack ni requisitos.
+- Tras la confirmación y con contexto suficiente, ejecuta los pasos de preparación de abajo.
+
+Si ya hay código o documentos sustantivos, procede a completar la preparación de lo que falte. Si el objetivo o una decisión necesaria no puede obtenerse de los archivos, pregunta antes de inventarla.
+
+## 1. Git local
+
+Determina si el proyecto activo ya pertenece a un repositorio Git. Ejecuta comandos de shell siempre explícitamente con Bash. Si no pertenece a uno, inicializa un repositorio local en la raíz activa con `bash -c 'git init'`. No crees un repositorio anidado si el directorio ya está dentro de otro repositorio. No configures remotos, no hagas commits ni push. No inicialices Git en un directorio padre, el home o el repositorio Integral.
+
+## 2. `.gitignore` básico
+
+Comprueba si existe `.gitignore`. Si falta, crea uno breve con exclusiones genéricas seguras (`.env`, `.env.*` excepto `.env.example`, `.DS_Store` y `Thumbs.db`) y añade `.opencode/LEARN.md` para que la memoria local no se publique accidentalmente. Si ya existe, consérvalo y añade solo las entradas que falten, sin reemplazar reglas del proyecto. Añade exclusiones específicas de dependencias o artefactos únicamente cuando el stack esté comprobado.
+
+## 3. Instrucciones del proyecto (flujo de `/init`)
 
 Create or update `AGENTS.md` for this repository.
 
@@ -72,18 +90,18 @@ When in doubt, omit. Prefer short sections and bullets. If the repo is simple, k
 
 If `AGENTS.md` already exists, improve it in place rather than rewriting blindly. Preserve verified useful guidance and user-authored constraints, remove only fluff or stale claims, and reconcile it with the current codebase. Keep any content outside a section you update.
 
-## 2. LEARN de Integral
+## 4. Planificación mínima
 
-Inicializa la memoria global y la del proyecto con el mecanismo idempotente de `/integral-learn`. El comando ejecutó antes de esta solicitud el inicializador y reportó:
+Comprueba si ya existe planificación útil (por ejemplo `PLAN.md`, roadmap, issues o especificación). Si existe, consérvala y úsala. Si no existe, crea `PLAN.md` en la raíz con el objetivo y alcance confirmado, estado actual, fases de trabajo pendientes y decisiones o preguntas abiertas. Basa el contenido en el proyecto y en las respuestas del usuario; no inventes backlog, stack, requisitos o fechas. Si no hay trabajo pendiente identificable, indícalo en vez de fabricar tareas.
 
-!`bash -c 'python3 "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands/integral-learn-init.py"'`
+## 5. LEARN de Integral
 
-Toma esa salida como evidencia del resultado: no vuelvas a ejecutar ni afirmes éxito si reportó errores. Respeta cualquier archivo existente; no copies preferencias entre memorias ni agregues preferencias por el usuario durante una inicialización.
+Ejecuta el inicializador con Bash: `bash -c 'python3 "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands/integral-learn-init.py"'`. Comprueba su salida y resume las rutas creadas, existentes o con errores. Si falla, no afirmes éxito ni crees las memorias a mano. Respeta cualquier archivo existente; no copies preferencias entre memorias ni agregues preferencias por el usuario durante una inicialización.
 
-## 3. Modelos por tarea de Integral
+## 6. Modelos por tarea de Integral
 
-Lee el archivo instalado `commands/integral-modelos.md` y sigue su procedimiento completo para evaluar favoritos disponibles, contrastar catálogo OpenCode con Artificial Analysis, indicar fuentes/fecha/límites y generar o actualizar la sección `MODELS-PROJECT` de `AGENTS.md` en la raíz. La tabla es opcional para el uso del agente, pero este comando la genera como parte de la inicialización. Conserva todo el contenido fuera de esa sección. Si faltan favoritos o evidencia, documenta el bloqueo según ese comando; no inventes asignaciones. No delegues a subagentes.
+Con `AGENTS.md`, planificación mínima y LEARN preparados, lee `commands/integral-modelos.md` instalado y sigue su procedimiento completo. Analiza la carga pendiente por fase, pregunta al usuario qué proveedor usar, evalúa todos los modelos disponibles de ese proveedor, contrasta el catálogo con Artificial Analysis y genera o actualiza `MODELS-PROJECT`. Conserva íntegro el contenido fuera de esa sección. Si no hay evidencia suficiente, documenta el bloqueo; no inventes asignaciones ni elijas otro proveedor. No delegues a subagentes.
 
-## 4. Cierre
+## 7. Cierre
 
-Comprueba que `AGENTS.md` contiene las instrucciones técnicas pertinentes y la sección de modelos —o el bloqueo documentado—, y que las memorias reportadas no se sobrescribieron. Resume los archivos creados/actualizados, qué se inicializó y cualquier limitación. No cambies el código de la aplicación del usuario como parte de esta inicialización.
+Comprueba Git, `.gitignore`, `AGENTS.md`, la planificación, el resultado de LEARN y la sección de modelos —o el bloqueo documentado—. Resume qué se creó o conservó y cualquier limitación. No cambies el código de la aplicación ni instales dependencias.

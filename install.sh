@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 
 root, cfg = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
-assets = ["agents/integral.md", "commands/integral-modelos.md", "commands/integral-learn.md", "commands/integral-init.md", "commands/integral-learn-init.py",
+assets = ["agents/integral.md", "commands/integral-modelos.md", "commands/integral-learn.md", "commands/integral-init.md", "commands/integral-learn-init.py", "commands/integral-modelos-data.py",
           "plugins/integral-model-switch", "plugins/integral-sidebar"]
 backup = cfg / ".integral-backups" / datetime.now().strftime("%Y%m%d-%H%M%S")
 made_backup = False

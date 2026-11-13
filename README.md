@@ -6,9 +6,9 @@ Integral es un paquete para habilitar un agente de OpenCode, memorias de colabor
 
 ### Agente Integral
 
-`agents/integral.md` define el flujo de colaboración del agente. Si el proyecto no tiene tabla de modelos o una fase no está asignada, Integral conserva el modelo seleccionado y continúa sin exigir una evaluación. `/integral-modelos` evalúa favoritos disponibles y crea o actualiza la sección delimitada en `AGENTS.md` del proyecto activo. El plugin `plugins/integral-model-switch/` aplica las asignaciones definidas cuando existen.
+`agents/integral.md` define el flujo de colaboración del agente. Si el proyecto no tiene tabla de modelos o una fase no está asignada, Integral conserva el modelo seleccionado y continúa sin exigir una evaluación. `/integral-modelos` crea o actualiza la sección delimitada en `AGENTS.md` del proyecto activo según el proveedor que elija el usuario. El plugin `plugins/integral-model-switch/` aplica las asignaciones definidas cuando existen.
 
-`/integral-init` combina el análisis guiado de proyecto de `/init` con la creación/actualización cuidadosa de `AGENTS.md`, inicialización LEARN y evaluación de modelos. No reemplaza contenido existente del usuario fuera de la sección de modelos.
+`/integral-init` prepara el proyecto para desarrollarlo con Integral: si está vacío, primero pide confirmación y el objetivo; después inicializa Git local y `.gitignore` si faltan, crea o actualiza `AGENTS.md`, prepara una planificación mínima, inicializa LEARN y asigna modelos. No crea código de aplicación, instala dependencias, configura remotos ni publica commits.
 
 ### Memorias LEARN
 
@@ -31,7 +31,7 @@ Cada memoria la genera el comando en el destino del usuario; este repositorio no
 
 - OpenCode instalado y configurado.
 - Bash y Python 3.
-- Para `/integral-modelos`, favoritos y catálogo OpenCode disponibles. Artificial Analysis es una fuente complementaria; cualquier dato inaccesible se declara como limitación.
+- Para `/integral-modelos`, proveedores/modelos configurados en OpenCode y catálogo disponible. Artificial Analysis es una fuente complementaria; cualquier dato inaccesible se declara como limitación.
 
 ## Instalación
 
@@ -58,7 +58,7 @@ Elige Integral como agente principal. Usa `/integral-sidebar` para mostrar u ocu
 
 ## Evaluación de modelos
 
-`/integral-modelos` actualiza `AGENTS.md` en cada ejecución, aunque la tabla no cambie. Solo asigna favoritos disponibles; compara el catálogo de OpenCode con Artificial Analysis, registra fuentes y límites, no extrapola métricas entre variantes e indica confianza. Las cifras de benchmarks no garantizan resultados en un proyecto concreto.
+`/integral-modelos` exige contexto sustantivo del proyecto. Si está vacío, primero pregunta si se quiere inicializar y espera; con aprobación prepara el mínimo necesario antes de evaluar. Luego analiza la carga pendiente por fase, pregunta qué proveedor configurado usar y compara todos sus modelos disponibles —no solo favoritos— con Artificial Analysis (`https://artificialanalysis.ai/models`) y el catálogo de OpenCode. Prioriza capacidad suficiente y ahorro de coste; el tiempo es secundario. El auxiliar `commands/integral-modelos-data.py` limita los datos del catálogo a metadatos no sensibles. Registra fuentes y límites, no extrapola métricas entre variantes e indica confianza.
 
 ## Verificación
 
