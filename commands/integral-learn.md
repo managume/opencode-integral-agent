@@ -1,13 +1,13 @@
 ---
-description: Inicializa las memorias global y del proyecto sin sobrescribirlas
+description: Initialize global and project memories without overwriting them
 agent: integral
 subagent: false
 ---
 
-Inicializa ambas memorias usando el inicializador del paquete:
+Initialize both memories using the package initializer:
 
 !`bash -c 'python3 "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands/integral-learn-init.py"'`
 
-El inicializador usa la raíz Git (o el directorio actual si no hay Git), crea únicamente los archivos ausentes con creación exclusiva y deja intactos incluso los enlaces simbólicos. Resume los resultados mostrados por el inicializador; si indica un error, no afirmes que ambas memorias quedaron listas.
+The initializer uses the Git root (or the current directory if Git is unavailable), creates only missing files using exclusive creation, and leaves existing paths—including symlinks—untouched. Summarize the initializer's output; if it reports an error, do not claim both memories were initialized.
 
-No copies preferencias entre ámbitos. La global es para criterios generales; la local pertenece al proyecto. Este comando inicializa archivos, no añade preferencias automáticamente.
+Do not copy preferences between scopes. Global memory is for general preferences; local memory belongs to the project. This command initializes files; it does not add preferences automatically.

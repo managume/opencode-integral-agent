@@ -1,30 +1,30 @@
 ---
-description: Inicializa instrucciones del proyecto como /init y prepara las funciones de Integral
+description: Initialize project instructions like /init and set up Integral features
 agent: integral
 subagent: false
 ---
 
-Prepara el proyecto activo para que pueda desarrollarse con Integral. Esta primera sección reproduce el flujo guiado de `/init` de OpenCode; las secciones siguientes completan su preparación con Git, planificación y funciones de Integral. No generes código de aplicación ni instales dependencias.
+Prepare the active project for development with Integral. The first section reproduces OpenCode's guided `/init` workflow; the following sections complete project setup with Git, planning, and Integral features. Do not generate application code or install dependencies.
 
-## 0. Proyecto vacío
+## 0. Empty project
 
-Inspecciona primero la raíz activa. Si no hay código, documentación del proyecto, especificaciones, planificación ni instrucciones sustantivas que permitan identificar su propósito, todavía no inicialices archivos ni Git: pregunta con la interfaz nativa si el usuario quiere inicializar el proyecto y espera su respuesta.
+First inspect the active project root. If there is no code, project documentation, specification, plan, or substantive instructions that identify its purpose, do not create files or initialize Git yet. Use OpenCode's native question interface to ask whether the user wants to initialize the project, then wait for the answer.
 
-- Si responde que no, termina sin cambios.
-- Si responde que sí pero no ha indicado el objetivo del proyecto, pregunta en un único lote breve por propósito, resultado esperado, restricciones y cualquier tecnología que ya haya elegido. Espera antes de crear archivos; no deduzcas stack ni requisitos.
-- Tras la confirmación y con contexto suficiente, ejecuta los pasos de preparación de abajo.
+- If the user declines, finish without making changes.
+- If the user agrees but has not stated the project's goal, ask in one concise batch about its purpose, expected outcome, constraints, and any technology already chosen. Wait before creating files; do not infer a stack or requirements.
+- After confirmation and once sufficient context is available, perform the setup steps below.
 
-Si ya hay código o documentos sustantivos, procede a completar la preparación de lo que falte. Si el objetivo o una decisión necesaria no puede obtenerse de los archivos, pregunta antes de inventarla.
+If code or substantive documents already exist, complete any missing setup. If the goal or a necessary decision cannot be determined from the files, ask rather than inventing it.
 
-## 1. Git local
+## 1. Local Git repository
 
-Determina si el proyecto activo ya pertenece a un repositorio Git. Ejecuta comandos de shell siempre explícitamente con Bash. Si no pertenece a uno, inicializa un repositorio local en la raíz activa con `bash -c 'git init'`. No crees un repositorio anidado si el directorio ya está dentro de otro repositorio. No configures remotos, no hagas commits ni push. No inicialices Git en un directorio padre, el home o el repositorio Integral.
+Determine whether the active project already belongs to a Git repository. Always run shell commands explicitly through Bash. If it does not, initialize a local repository at the active root with `bash -c 'git init'`. Do not create a nested repository if the directory is already inside another repository. Do not configure remotes, commit, or push. Never initialize Git in a parent directory, the home directory, or the Integral repository.
 
-## 2. `.gitignore` básico
+## 2. Basic `.gitignore`
 
-Comprueba si existe `.gitignore`. Si falta, crea uno breve con exclusiones genéricas seguras (`.env`, `.env.*` excepto `.env.example`, `.DS_Store` y `Thumbs.db`) y añade `.opencode/LEARN.md` para que la memoria local no se publique accidentalmente. Si ya existe, consérvalo y añade solo las entradas que falten, sin reemplazar reglas del proyecto. Añade exclusiones específicas de dependencias o artefactos únicamente cuando el stack esté comprobado.
+Check whether `.gitignore` exists. If it is missing, create a brief file with safe generic exclusions (`.env`, `.env.*` except `.env.example`, `.DS_Store`, and `Thumbs.db`) and add `.opencode/LEARN.md` so local memory is not accidentally published. If it already exists, preserve it and add only missing entries without replacing project rules. Add stack-specific dependency or artifact exclusions only when the stack is verified.
 
-## 3. Instrucciones del proyecto (flujo de `/init`)
+## 3. Project instructions (`/init` workflow)
 
 Create or update `AGENTS.md` for this repository.
 
@@ -90,18 +90,18 @@ When in doubt, omit. Prefer short sections and bullets. If the repo is simple, k
 
 If `AGENTS.md` already exists, improve it in place rather than rewriting blindly. Preserve verified useful guidance and user-authored constraints, remove only fluff or stale claims, and reconcile it with the current codebase. Keep any content outside a section you update.
 
-## 4. Planificación mínima
+## 4. Minimal project plan
 
-Comprueba si ya existe planificación útil (por ejemplo `PLAN.md`, roadmap, issues o especificación). Si existe, consérvala y úsala. Si no existe, crea `PLAN.md` en la raíz con el objetivo y alcance confirmado, estado actual, fases de trabajo pendientes y decisiones o preguntas abiertas. Basa el contenido en el proyecto y en las respuestas del usuario; no inventes backlog, stack, requisitos o fechas. Si no hay trabajo pendiente identificable, indícalo en vez de fabricar tareas.
+Check whether useful planning already exists (for example, `PLAN.md`, a roadmap, issues, or a specification). Preserve and use it if present. Otherwise, create a root-level `PLAN.md` with the confirmed goal and scope, current status, pending work by phase, and open decisions or questions. Base it on the project and the user's answers; do not invent a backlog, stack, requirements, or dates. If no pending work can be identified, say so instead of fabricating tasks.
 
-## 5. LEARN de Integral
+## 5. Integral LEARN memories
 
-Ejecuta el inicializador con Bash: `bash -c 'python3 "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands/integral-learn-init.py"'`. Comprueba su salida y resume las rutas creadas, existentes o con errores. Si falla, no afirmes éxito ni crees las memorias a mano. Respeta cualquier archivo existente; no copies preferencias entre memorias ni agregues preferencias por el usuario durante una inicialización.
+Run the initializer through Bash: `bash -c 'python3 "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands/integral-learn-init.py"'`. Check its output and summarize paths created, already present, or reporting errors. If it fails, do not claim success or create the memories manually. Preserve all existing files; do not copy preferences between memories or add user preferences during initialization.
 
-## 6. Modelos por tarea de Integral
+## 6. Integral model assignments
 
-Con `AGENTS.md`, planificación mínima y LEARN preparados, lee `commands/integral-modelos.md` instalado y sigue su procedimiento completo. Analiza la carga pendiente por fase, pregunta al usuario qué proveedor usar, evalúa todos los modelos disponibles de ese proveedor, contrasta el catálogo con Artificial Analysis y genera o actualiza `MODELS-PROJECT`. Conserva íntegro el contenido fuera de esa sección. Si no hay evidencia suficiente, documenta el bloqueo; no inventes asignaciones ni elijas otro proveedor. No delegues a subagentes.
+Once `AGENTS.md`, the minimum plan, and LEARN are ready, read the installed `commands/integral-modelos.md` and follow its full procedure. Analyze pending work by phase, ask the user which provider to use, evaluate all available models from that provider, compare the catalog with Artificial Analysis, and create or update `MODELS-PROJECT`. Preserve all content outside that section. If evidence is insufficient, document the blocker; do not invent assignments or choose another provider. Do not delegate to subagents.
 
-## 7. Cierre
+## 7. Completion
 
-Comprueba Git, `.gitignore`, `AGENTS.md`, la planificación, el resultado de LEARN y la sección de modelos —o el bloqueo documentado—. Resume qué se creó o conservó y cualquier limitación. No cambies el código de la aplicación ni instales dependencias.
+Verify Git, `.gitignore`, `AGENTS.md`, the plan, the LEARN result, and the model section—or its documented blocker. Summarize what was created or preserved and any limitations. Do not change application code or install dependencies.
