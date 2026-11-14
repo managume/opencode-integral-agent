@@ -4,6 +4,8 @@
 !.gitignore
 !README.md
 !install.sh
+!tests/
+!tests/test_continuity_workflow.py
 !agents/
 !agents/integral.md
 !commands/

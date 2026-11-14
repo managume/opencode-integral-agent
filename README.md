@@ -6,7 +6,9 @@ Integral es un paquete para habilitar un agente de OpenCode, memorias de colabor
 
 ### Agente Integral
 
-`agents/integral.md` define el flujo de colaboración del agente. Si el proyecto no tiene tabla de modelos o una fase no está asignada, Integral conserva el modelo seleccionado y continúa sin exigir una evaluación. `/integral-modelos` crea o actualiza la sección delimitada en `AGENTS.md` del proyecto activo según el proveedor que elija el usuario. El plugin `plugins/integral-model-switch/` aplica las asignaciones definidas cuando existen.
+`agents/integral.md` define el flujo de colaboración del agente. Integral trabaja con criterios de aceptación y checklist, verifica bloques pequeños y continúa con el siguiente pendiente en el turno disponible. Solo cierra al completar el alcance o alcanzar un bloqueo/límite real; no afirma ejecución en segundo plano. Los checkpoints temporales se guardan en `.opencode/checkpoints/` del proyecto y se contrastan con el estado real al reanudar. Si el proyecto no tiene tabla de modelos o una fase no está asignada, Integral conserva el modelo seleccionado y continúa sin exigir una evaluación. `/integral-modelos` crea o actualiza la sección delimitada en `AGENTS.md` del proyecto activo según el proveedor que elija el usuario. El plugin `plugins/integral-model-switch/` aplica las asignaciones definidas cuando existen.
+
+Integral puede delegar trabajo independiente cuando el ahorro esperado compense la coordinación. Cada escritor paralelo necesita un worktree y una rama propios, verificados antes de editar. Si no es posible garantizar y comprobar el directorio de la sesión hija, el trabajo se hace en serie. Los worktrees no aíslan servicios externos. Integral conserva la revisión, las pruebas del conjunto y la integración central; sigue la rama de destino documentada por cada proyecto, preserva cambios previos y confirma rama y árbol al finalizar.
 
 `/integral-init` prepara el proyecto para desarrollarlo con Integral: si está vacío, primero pide confirmación y el objetivo; después inicializa Git local y `.gitignore` si faltan, crea o actualiza `AGENTS.md`, prepara una planificación mínima, inicializa LEARN y asigna modelos. No crea código de aplicación, instala dependencias, configura remotos ni publica commits.
 
@@ -66,9 +68,10 @@ Elige Integral como agente principal. Usa `/integral-sidebar` para mostrar u ocu
 bash -n install.sh
 ./install.sh --help
 python3 -m py_compile commands/integral-learn-init.py
+python3 -m unittest discover -s tests -v
 ```
 
-Prueba instalaciones en un directorio temporal; nunca uses una configuración de usuario real para las pruebas.
+Prueba instalaciones en un directorio temporal; nunca uses una configuración de usuario real para las pruebas. Las pruebas de continuidad comprueban reglas clave y mecánicas Git con repositorios desechables, sin acceder a proyectos del usuario. No simulan una sesión de modelo ni pueden garantizar que la plataforma mantenga un turno abierto o preserve herramientas tras un límite forzado.
 
 ## Seguridad
 

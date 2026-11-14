@@ -56,6 +56,8 @@ Look for the highest-signal facts for an agent working in this repo:
 - framework or toolchain quirks: generated code, migrations, codegen, build artifacts, special env loading, dev servers, infra deploy flow
 - testing quirks: fixtures, integration test prerequisites, snapshot workflows, required services, flaky or expensive suites
 - important constraints from existing instruction files worth preserving
+- the project's actual branch, merge/pull-request, commit, and push expectations; never assume the destination branch
+- acceptance criteria and the existing progress/checkpoint conventions, if any
 
 Good `AGENTS.md` content is usually hard-earned context that took reading multiple files to infer.
 
@@ -94,13 +96,21 @@ If `AGENTS.md` already exists, improve it in place rather than rewriting blindly
 
 Check whether useful planning already exists (for example, `PLAN.md`, a roadmap, issues, or a specification). Preserve and use it if present. Otherwise, create a root-level `PLAN.md` with the confirmed goal and scope, current status, pending work by phase, and open decisions or questions. Base it on the project and the user's answers; do not invent a backlog, stack, requirements, or dates. If no pending work can be identified, say so instead of fabricating tasks.
 
+## 4a. Continuity and Git workflow
+
+Record verified, high-signal project-specific completion criteria and Git expectations in `AGENTS.md`: how to identify the agreed destination branch, whether commits, integration, and push are expected, and any required checks. If the repository does not establish a material convention, ask the user once using the native question interface; do not assume `develop`, create a remote, or publish during initialization.
+
+Integral keeps task checklists and temporary recovery checkpoints in `.opencode/checkpoints/`, separate from `LEARN.md` and long-lived project plans. Add `/.opencode/checkpoints/` to the project's `.gitignore` without replacing existing rules, unless the user explicitly wants checkpoints versioned. Checkpoints must contain no secrets or personal data. They do not replace task commits or project documentation.
+
+For parallel implementation, Integral may delegate only independent, bounded work. Each writer must have its own verified Git worktree and branch, explicit file ownership and acceptance criteria. If its session cannot be verified in the assigned worktree before editing, continue serially. Integral reviews, verifies, and centrally integrates all delivered work; worktrees do not isolate shared services such as databases or ports.
+
 ## 5. Integral LEARN memories
 
 Run the initializer through Bash: `bash -c 'python3 "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands/integral-learn-init.py"'`. Check its output and summarize paths created, already present, or reporting errors. If it fails, do not claim success or create the memories manually. Preserve all existing files; do not copy preferences between memories or add user preferences during initialization.
 
 ## 6. Integral model assignments
 
-Once `AGENTS.md`, the minimum plan, and LEARN are ready, read the installed `commands/integral-modelos.md` and follow its full procedure. Analyze pending work by phase, ask the user which provider to use, evaluate all available models from that provider, compare the catalog with Artificial Analysis, and create or update `MODELS-PROJECT`. Preserve all content outside that section. If evidence is insufficient, document the blocker; do not invent assignments or choose another provider. Do not delegate to subagents.
+Once `AGENTS.md`, the minimum plan, and LEARN are ready, read the installed `commands/integral-modelos.md` and follow its full procedure. Analyze pending work by phase, ask the user which provider to use, evaluate all available models from that provider, compare the catalog with Artificial Analysis, and create or update `MODELS-PROJECT`. Preserve all content outside that section. If evidence is insufficient, document the blocker; do not invent assignments or choose another provider.
 
 ## 7. Completion
 
