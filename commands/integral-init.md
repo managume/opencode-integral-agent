@@ -18,7 +18,7 @@ If code or substantive documents already exist, complete any missing setup. If t
 
 ## 1. Local Git repository
 
-Determine whether the active project already belongs to a Git repository. Always run shell commands explicitly through Bash. If it does not, initialize a local repository at the active root with `bash -c 'git init'`. Do not create a nested repository if the directory is already inside another repository. Do not configure remotes, commit, or push. Never initialize Git in a parent directory, the home directory, or the Integral repository.
+Determine whether the active project already belongs to a Git repository. If it does not, initialize a local repository at the active root with `git init`, using the configured shell. Do not create a nested repository if the directory is already inside another repository. Do not configure remotes, commit, or push. Never initialize Git in a parent directory, the home directory, or the Integral repository.
 
 ## 2. Basic `.gitignore`
 
@@ -106,7 +106,9 @@ For parallel implementation, Integral may delegate only independent, bounded wor
 
 ## 5. Integral LEARN memories
 
-Run the initializer through Bash: `bash -c 'python3 "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands/integral-learn-init.py"'`. Check its output and summarize paths created, already present, or reporting errors. If it fails, do not claim success or create the memories manually. Preserve all existing files; do not copy preferences between memories or add user preferences during initialization.
+Run the installed Node.js memory initializer:
+`node -e "import(Buffer.from('__INTEGRAL_LEARN_HELPER_URL__','base64').toString()).then(m=>m.main({configDir:Buffer.from('__INTEGRAL_CONFIG_DIR__','base64').toString()}))"`
+Check its output and summarize paths created, already present, or reporting errors. If it fails, do not claim success or create the memories manually. Preserve all existing files; do not copy preferences between memories or add preferences during initialization.
 
 ## 6. Integral model assignments
 

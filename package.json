@@ -1,0 +1,32 @@
+{
+  "name": "integral-opencode",
+  "version": "1.0.0",
+  "description": "Install and update the Integral OpenCode agent, commands, and plugins",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/managume/opencode-integral-agent.git"
+  },
+  "homepage": "https://github.com/managume/opencode-integral-agent#readme",
+  "type": "module",
+  "bin": {
+    "integral-opencode": "bin/integral.js"
+  },
+  "engines": {
+    "node": ">=20",
+    "npm": ">=7"
+  },
+  "files": [
+    "agents/",
+    "bin/",
+    "commands/",
+    "lib/",
+    "plugins/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "jsonc-parser": "3.3.1"
+  }
+}

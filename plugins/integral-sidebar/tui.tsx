@@ -8,11 +8,14 @@ type Section = "models" | "global" | "project"
 type ModelAssignment = { task: string; model: string }
 
 const configHome = process.env.XDG_CONFIG_HOME || path.join(homedir(), ".config")
-const globalLearnPath = path.join(configHome, "opencode", "LEARN.md")
 
 export default Plugin.define({
   id: "integral-sidebar",
   setup(context) {
+    const configDir = typeof (context.options as { configDir?: unknown } | undefined)?.configDir === "string"
+      ? (context.options as { configDir: string }).configDir
+      : path.join(configHome, "opencode")
+    const globalLearnPath = path.join(configDir, "LEARN.md")
     const [visible, setVisible] = createSignal(true)
     const [expanded, setExpanded] = createSignal<Record<Section, boolean>>({
       models: true,
@@ -38,6 +41,7 @@ export default Plugin.define({
         <Show when={visible()}>
           <Sidebar
             sessionID={sessionID}
+            globalLearnPath={globalLearnPath}
             expanded={expanded}
             onToggle={(section) => setExpanded((current) => ({ ...current, [section]: !current[section] }))}
           />
@@ -49,6 +53,7 @@ export default Plugin.define({
 
 function Sidebar(props: {
   sessionID?: string
+  globalLearnPath: string
   expanded: () => Record<Section, boolean>
   onToggle: (section: Section) => void
 }) {
@@ -74,7 +79,7 @@ function Sidebar(props: {
 
   const globalContent = () => {
     revision()
-    return readOptional(globalLearnPath)
+    return readOptional(props.globalLearnPath)
   }
 
   const projectContent = () => {

@@ -27,29 +27,36 @@ Cada memoria la genera el comando en el destino del usuario; este repositorio no
 
 ### Instalador
 
-`install.sh` enlaza agente, comandos y plugins y fusiona solo los ajustes de activación necesarios en la configuración OpenCode que ya exista. No instala memorias ni asignaciones generadas: inicialízalas con `/integral-init` (todo junto), o por separado con `/integral-learn` y `/integral-modelos`.
+El ejecutable `integral-opencode` instala y actualiza Integral desde GitHub mediante `npx`. Copia los recursos y plugins a una ubicación persistente bajo la configuración de OpenCode; no deja enlaces al caché efímero de npm ni al checkout del repositorio. Las versiones anteriores permanecen disponibles para recuperación.
 
 ## Requisitos
 
 - OpenCode instalado y configurado.
-- Bash y Python 3.
+- Node.js 20 o posterior y npm 7 o posterior.
+- Git, necesario para que npm descargue el paquete desde GitHub.
 - Para `/integral-modelos`, proveedores/modelos configurados en OpenCode y catálogo disponible. Artificial Analysis es una fuente complementaria; cualquier dato inaccesible se declara como limitación.
 
 ## Instalación
 
 ```bash
-./install.sh
+npx --yes --prefer-online --package=github:managume/opencode-integral-agent#main integral-opencode
 ```
 
-Por defecto usa `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. Para otra instancia:
+`--prefer-online` solicita a npm que compruebe si la referencia GitHub tiene una versión más reciente en lugar de confiar en una entrada cacheada. Para fijar una revisión reproducible, sustituye `main` por un tag o commit. El instalador acepta:
 
 ```bash
-./install.sh --config-dir /ruta/a/config/opencode
-# O bien:
-OPENCODE_CONFIG_DIR=/ruta/a/config/opencode ./install.sh
+npx --yes --prefer-online --package=github:managume/opencode-integral-agent#main integral-opencode --dry-run
+npx --yes --prefer-online --package=github:managume/opencode-integral-agent#main integral-opencode --check
+npx --yes --prefer-online --package=github:managume/opencode-integral-agent#main integral-opencode --config-dir /ruta/a/config/opencode
 ```
 
-El instalador conserva los ajustes ajenos, registra las rutas global y local de LEARN y enlaza los recursos del paquete. Si una ruta de recurso ya existe y no apunta al repositorio, guarda una copia en `.integral-backups/` antes de enlazarla. Es idempotente; mantén el repositorio disponible mientras OpenCode use esos enlaces. No crea ni modifica `LEARN.md` o el `AGENTS.md` de ningún usuario/proyecto.
+Por defecto usa `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. `--config-dir` sirve para otra instalación/configuración aislada; para que OpenCode la utilice, inicia OpenCode con `XDG_CONFIG_HOME` apuntando al directorio padre correspondiente.
+
+El instalador conserva comentarios y ajustes ajenos de `opencode.json(c)` y `cli.json`, conserva las memorias existentes y crea la memoria global solo si falta. Activa Integral como agente disponible, registra sus comandos y plugins, y habilita `experimental.todo` para que el agente pueda usar el checklist nativo. Si el usuario lo ha deshabilitado explícitamente, lo conserva e informa de que el checklist no estará disponible.
+
+Los recursos activos se copian a `agents/` y `commands/`; plugins y auxiliares persistentes quedan bajo `integral/current/`, que apunta a una release copiada localmente. La actualización prepara y valida la release antes de activarla. Archivos en conflicto y configuraciones reemplazadas se respaldan en `.integral-backups/`. La instalación es repetible; `--check` valida los recursos y su configuración y `--dry-run` no escribe archivos ni descarga dependencias.
+
+En una migración desde los enlaces creados por `install.sh`, la instalación guarda esos enlaces y cualquier archivo homónimo reemplazado en el backup. No elimina el checkout anterior, las memorias del usuario, configuraciones o recursos ajenos. Las releases previas se conservan.
 
 Tras instalar, recarga OpenCode y ejecuta desde cada proyecto:
 
@@ -60,19 +67,19 @@ Elige Integral como agente principal. Usa `/integral-sidebar` para mostrar u ocu
 
 ## Evaluación de modelos
 
-`/integral-modelos` exige contexto sustantivo del proyecto. Si está vacío, primero pregunta si se quiere inicializar y espera; con aprobación prepara el mínimo necesario antes de evaluar. Luego analiza la carga pendiente por fase, pregunta qué proveedor configurado usar y compara todos sus modelos disponibles —no solo favoritos— con Artificial Analysis (`https://artificialanalysis.ai/models`) y el catálogo de OpenCode. Prioriza capacidad suficiente y ahorro de coste; el tiempo es secundario. El auxiliar `commands/integral-modelos-data.py` limita los datos del catálogo a metadatos no sensibles. Registra fuentes y límites, no extrapola métricas entre variantes e indica confianza.
+`/integral-modelos` exige contexto sustantivo del proyecto. Si está vacío, primero pregunta si se quiere inicializar y espera; con aprobación prepara el mínimo necesario antes de evaluar. Luego analiza la carga pendiente por fase, pregunta qué proveedor configurado usar y compara todos sus modelos disponibles —no solo favoritos— con Artificial Analysis (`https://artificialanalysis.ai/models`) y el catálogo de OpenCode. Prioriza capacidad suficiente y ahorro de coste; el tiempo es secundario. El auxiliar Node.js `integral/current/commands/integral-modelos-data.js` limita los datos del catálogo a metadatos no sensibles. Registra fuentes y límites, no extrapola métricas entre variantes e indica confianza.
 
 ## Verificación
 
 ```bash
-bash -n install.sh
-./install.sh --help
-python3 -m py_compile commands/integral-learn-init.py
-python3 -m unittest discover -s tests -v
+npm test
+node --check bin/integral.js
+node bin/integral.js --help
+npm pack --dry-run
 ```
 
-Prueba instalaciones en un directorio temporal; nunca uses una configuración de usuario real para las pruebas. Las pruebas de continuidad comprueban reglas clave y mecánicas Git con repositorios desechables, sin acceder a proyectos del usuario. No simulan una sesión de modelo ni pueden garantizar que la plataforma mantenga un turno abierto o preserve herramientas tras un límite forzado.
+Las pruebas usan repositorios y configuraciones temporales, sin acceder a proyectos o configuraciones reales del usuario. Incluyen instalación, migración, actualización, repetición idempotente y preservación de JSONC. El chequeo del instalador verifica archivos y configuración, pero no afirma por sí solo que una instancia activa de OpenCode haya cargado los plugins.
 
 ## Seguridad
 
-`.gitignore` es una lista permitida y excluye por defecto los archivos que no forman parte del paquete, además de claves, credenciales, `.env`, dependencias y artefactos. No agregues memorias de usuario/proyecto, configuraciones globales, tokens ni tablas generadas por `/integral-modelos`.
+El paquete de npm solo incluye el agente, comandos, plugins, ejecutable, instalador y documentación expresamente enumerados. No incluye memorias, configuraciones globales, tokens, checkpoints ni tablas generadas por `/integral-modelos`. `.gitignore` excluye dependencias y artefactos locales.
