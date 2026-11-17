@@ -20,7 +20,7 @@ const readme = await readFile(path.join(root, "README.md"), "utf8")
 
 test("Integral instructions require persistent, verified completion", () => {
   for (const phrase of [
-    "Do not voluntarily end a turn",
+    "Without an active native goal, do not voluntarily end a turn",
     "task checklist",
     "Resume before replanning",
     "`.opencode/checkpoints/integral-<task-id>.md`",
@@ -35,7 +35,32 @@ test("Integral instructions require persistent, verified completion", () => {
     "two consecutive attempts without progress",
     "OpenCode does not provide a reliable token budget",
     "Save only durable, useful collaboration preferences",
+    "Treat OpenCode's built-in `/goal` as the only persistent continuation",
+    "finish a coherent implementation or verification block and yield normally",
+    "Never start a goal in a child session",
+    "OpenCode waits for their work before judging the parent",
+    "up to 50 rounds",
+    "current shell exposes `OPENCODE_SESSION_ID`",
+    "Do not reactivate a paused or cleared objective",
+    "Report cost or token consumption only from OpenCode's session/statistics output",
+    "let the native goal pause",
+    "steps: 16",
   ]) assert.ok(agent.includes(phrase), `missing instruction: ${phrase}`)
+})
+
+test("native goal policy is selective and avoids a second continuity mechanism", () => {
+  assert.ok(readme.includes("cuando un hito funcional de varios pasos"))
+  assert.ok(readme.includes("No se inicia un objetivo por cada petición"))
+  assert.ok(readme.includes("ni crea una segunda checklist, bucle, plugin o revisor"))
+  for (const phrase of [
+    "Use ordinary execution for small fixes",
+    "An explicit user `/goal` request always takes precedence",
+    "one concise objective",
+    "The native reviewer may then continue or conclude",
+    "Do not reactivate a paused or cleared objective",
+    "`/goal` state belongs to the OpenCode session",
+    "OpenCode's native review",
+  ]) assert.ok(agent.includes(phrase), `missing goal policy: ${phrase}`)
 })
 
 test("parallel writers require separate verified worktrees and central integration", () => {
@@ -656,6 +681,28 @@ test("OpenCode recognizes Integral's agent, managed config, and installed comman
   assert.ok(configSources.some((source) => source.path === path.join(configDir, "opencode.json")))
   const serverConfig = configSources.find((source) => source.path === path.join(configDir, "opencode.json"))
   assert.ok(serverConfig.info.plugins.includes(path.join(configDir, "integral/current/plugins/integral-model-switch")))
+
+  const commandList = spawnSync("opencode", ["api", "get", "/api/command", "--standalone"], {
+    cwd: temp,
+    env,
+    encoding: "utf8",
+    timeout: 120_000,
+  })
+  assert.equal(commandList.status, 0, commandList.stderr)
+  assert.ok(Array.isArray(JSON.parse(commandList.stdout).data))
+
+  const openapiResult = spawnSync("opencode", ["api", "get", "/openapi.json", "--standalone"], {
+    cwd: temp,
+    env,
+    encoding: "utf8",
+    timeout: 120_000,
+    maxBuffer: 16 * 1024 * 1024,
+  })
+  assert.equal(openapiResult.status, 0, openapiResult.stderr)
+  const openapiPayload = JSON.parse(openapiResult.stdout)
+  const openapi = openapiPayload.data ?? openapiPayload
+  assert.ok(openapi.paths["/api/session/{sessionID}/command"]?.post)
+  assert.ok(openapi.paths["/api/session/{sessionID}/interrupt"]?.post)
   for (const command of ["integral-start.md", "integral-audit.md", "integral-release.md", "integral-doctor.md"]) {
     assert.ok(await lstat(path.join(configDir, "commands", command)))
   }
