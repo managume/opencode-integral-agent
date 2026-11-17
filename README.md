@@ -56,7 +56,7 @@ El instalador conserva comentarios y ajustes ajenos de `opencode.json(c)` y `cli
 
 Los recursos activos se copian a `agents/` y `commands/`; plugins y auxiliares persistentes quedan bajo `integral/current/`, que apunta a una release copiada localmente. La actualización prepara y valida la release antes de activarla. Archivos en conflicto y configuraciones reemplazadas se respaldan en `.integral-backups/`. La instalación es repetible; `--check` valida los recursos y su configuración y `--dry-run` no escribe archivos ni descarga dependencias.
 
-En una migración desde los enlaces creados por `install.sh`, la instalación guarda esos enlaces y cualquier archivo homónimo reemplazado en el backup. No elimina el checkout anterior, las memorias del usuario, configuraciones o recursos ajenos. Las releases previas se conservan.
+En una migración desde los enlaces creados por `install.sh`, la instalación guarda esos enlaces (incluidos los auxiliares Python antiguos) y cualquier archivo homónimo reemplazado en el backup. No elimina el checkout anterior, las memorias del usuario, configuraciones o recursos ajenos. Las releases previas se conservan. Si la actualización falla, restaura la release y los archivos de Integral sin sobrescribir cambios concurrentes; conserva el backup cuando no sea seguro restaurar un archivo modificado.
 
 Tras instalar, recarga OpenCode y ejecuta desde cada proyecto:
 
@@ -67,7 +67,7 @@ Elige Integral como agente principal. Usa `/integral-sidebar` para mostrar u ocu
 
 ## Evaluación de modelos
 
-`/integral-modelos` exige contexto sustantivo del proyecto. Si está vacío, primero pregunta si se quiere inicializar y espera; con aprobación prepara el mínimo necesario antes de evaluar. Luego analiza la carga pendiente por fase, pregunta qué proveedor configurado usar y compara todos sus modelos disponibles —no solo favoritos— con Artificial Analysis (`https://artificialanalysis.ai/models`) y el catálogo de OpenCode. Prioriza capacidad suficiente y ahorro de coste; el tiempo es secundario. El auxiliar Node.js `integral/current/commands/integral-modelos-data.js` limita los datos del catálogo a metadatos no sensibles. Registra fuentes y límites, no extrapola métricas entre variantes e indica confianza.
+`/integral-modelos` exige contexto sustantivo del proyecto. Si está vacío, primero pregunta si se quiere inicializar y espera; con aprobación prepara el mínimo necesario antes de evaluar. Luego analiza la carga pendiente por fase, pregunta qué proveedor configurado usar y compara todos sus modelos disponibles —no solo favoritos— con Artificial Analysis (`https://artificialanalysis.ai/models`) y el catálogo de OpenCode. Prioriza capacidad suficiente y ahorro de coste; el tiempo es secundario. El auxiliar Node.js `integral/current/commands/integral-modelos-data.js` consulta el catálogo en la ubicación del proyecto activo, limita la salida a metadatos permitidos y devuelve solo los identificadores de variantes, nunca sus parámetros. Las consultas tienen timeout. Registra fuentes y límites, no extrapola métricas entre variantes e indica confianza.
 
 ## Verificación
 
@@ -78,7 +78,7 @@ node bin/integral.js --help
 npm pack --dry-run
 ```
 
-Las pruebas usan repositorios y configuraciones temporales, sin acceder a proyectos o configuraciones reales del usuario. Incluyen instalación, migración, actualización, repetición idempotente y preservación de JSONC. El chequeo del instalador verifica archivos y configuración, pero no afirma por sí solo que una instancia activa de OpenCode haya cargado los plugins.
+Las pruebas usan repositorios y configuraciones temporales, sin modificar la configuración real del usuario. Incluyen migración de enlaces antiguos y plugins duplicados, auxiliares ESM instalados, actualización repetible, preservación de JSONC, rollback seguro, sanitización del catálogo y una lista permitida de archivos publicados. Cuando OpenCode está disponible, también comprueban la detección del agente y los plugins instalados. El chequeo del instalador verifica archivos y configuración, pero no afirma por sí solo que una instancia activa de OpenCode haya cargado los plugins.
 
 ## Seguridad
 

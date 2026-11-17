@@ -5,7 +5,10 @@ import os from "node:os"
 import path from "node:path"
 import test from "node:test"
 import jsoncParser from "jsonc-parser"
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
+import { loadCatalog, sanitizeModel } from "../commands/integral-modelos-data.js"
+import { projectRoot } from "../commands/integral-learn-init.js"
+import { rollbackInstallation } from "../lib/installer.js"
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const agent = await readFile(path.join(root, "agents/integral.md"), "utf8")
@@ -21,6 +24,9 @@ test("Integral instructions require persistent, verified completion", () => {
     "Compilation or a successful build is not sufficient",
     "Never claim execution continues in the background",
     "sole authority for completion",
+    "pending, active, delivered, verified, and integrated",
+    "allow useful follow-up or further delegation",
+    "Integral reviews each delivery and diff",
   ]) assert.ok(agent.includes(phrase), `missing instruction: ${phrase}`)
 })
 
@@ -30,6 +36,7 @@ test("parallel writers require separate verified worktrees and central integrati
     "Before any child edits",
     "continue the implementation sequentially",
     "Integral reviews each delivery",
+    "one writer owns each shared file",
   ]) assert.ok(agent.includes(phrase), `missing instruction: ${phrase}`)
   assert.ok(readme.includes("un worktree y una rama propios"))
 })
@@ -37,6 +44,130 @@ test("parallel writers require separate verified worktrees and central integrati
 test("project initialization captures branch policy and excludes checkpoints", () => {
   assert.ok(init.includes("never assume the destination branch"))
   assert.ok(init.includes("Add `/.opencode/checkpoints/`"))
+})
+
+test("model catalog queries are bound to the project and strip arbitrary variant data", async () => {
+  const project = path.join(os.tmpdir(), "Integral project & worktree", "área")
+  const requests = []
+  const run = (_command, args) => {
+    requests.push(args[2])
+    const payload = args[2].startsWith("/api/provider")
+      ? { data: [{ id: "fixture", name: "Fixture", activation: "enabled" }] }
+      : {
+          data: [{
+            id: "chat",
+            modelID: "chat",
+            providerID: "fixture",
+            name: "Fixture Chat",
+            type: "chat",
+            capabilities: { tools: true },
+            variants: [{
+              id: "balanced",
+              headers: { Authorization: "SYNTHETIC_HEADER_SECRET" },
+              body: { api_key: "SYNTHETIC_BODY_SECRET" },
+              settings: { secret: "SYNTHETIC_SETTING_SECRET" },
+            }],
+            cost: [],
+            status: "active",
+            enabled: true,
+            limit: { context: 32_000, input: 32_000, output: 4_000 },
+            settings: { token: "SYNTHETIC_MODEL_SECRET" },
+          }],
+        }
+    return { status: 0, stdout: JSON.stringify(payload), stderr: "" }
+  }
+
+  const models = await loadCatalog(["models"], { cwd: project, run })
+  assert.equal(requests.length, 2)
+  for (const endpoint of requests) {
+    const url = new URL(endpoint, "http://opencode.local")
+    assert.equal(url.searchParams.get("location[directory]"), project)
+  }
+  assert.deepEqual(models[0].variants, [{ id: "balanced" }])
+  const serialized = JSON.stringify(models)
+  for (const secret of [
+    "SYNTHETIC_HEADER_SECRET",
+    "SYNTHETIC_BODY_SECRET",
+    "SYNTHETIC_SETTING_SECRET",
+    "SYNTHETIC_MODEL_SECRET",
+  ]) assert.ok(!serialized.includes(secret), `leaked ${secret}`)
+
+  const sanitized = sanitizeModel({
+    id: "chat",
+    providerID: "fixture",
+    variants: [{ id: "safe", headers: { authorization: "DO_NOT_EXPOSE" }, body: { token: "DO_NOT_EXPOSE" } }],
+  })
+  assert.deepEqual(sanitized.variants, [{ id: "safe" }])
+})
+
+test("model catalog helper reports a bounded OpenCode CLI timeout", async () => {
+  await assert.rejects(
+    loadCatalog(["providers"], {
+      cwd: process.cwd(),
+      run: () => ({ error: { code: "ETIMEDOUT", message: "spawnSync opencode ETIMEDOUT" }, status: null }),
+    }),
+    /timed out/,
+  )
+})
+
+test("memory initializer falls back only outside Git and diagnoses Git failures", () => {
+  const cwd = path.join(os.tmpdir(), "project without git")
+  assert.equal(projectRoot(cwd, () => ({
+    status: 128,
+    stdout: "",
+    stderr: "fatal: not a git repository",
+  })), cwd)
+  assert.equal(projectRoot(cwd, () => ({
+    error: { code: "ENOENT", message: "git missing" },
+  })), cwd)
+  assert.throws(() => projectRoot(cwd, () => ({
+    status: 128,
+    stdout: "",
+    stderr: "fatal: unable to access repository: permission denied",
+  })), /could not determine the project root/i)
+})
+
+test("installer attempts resource rollback even when restoring the active release fails", async (t) => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), "integral-rollback-test-"))
+  t.after(() => rm(temp, { recursive: true, force: true }))
+  const file = path.join(temp, "created.txt")
+  await writeFile(file, "installer-owned\n")
+  const errors = await rollbackInstallation({
+    current: path.join(temp, "integral/current"),
+    previousLink: "releases/previous",
+    switched: true,
+    restore: async () => { throw new Error("injected pointer restore failure") },
+    actions: [{ kind: "created", file, installedContent: "installer-owned\n" }],
+  })
+  assert.equal(errors.length, 1)
+  assert.match(errors[0], /injected pointer restore failure/)
+  await assert.rejects(lstat(file), { code: "ENOENT" })
+})
+
+test("installer rollback preserves concurrent edits and prior backups", async (t) => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), "integral-rollback-concurrent-"))
+  t.after(() => rm(temp, { recursive: true, force: true }))
+  const created = path.join(temp, "created.txt")
+  await writeFile(created, "concurrent user edit\n")
+  const replaced = path.join(temp, "replaced.txt")
+  const backup = path.join(temp, "backup.txt")
+  await writeFile(replaced, "concurrent replacement edit\n")
+  await writeFile(backup, "pre-install user content\n")
+
+  const errors = await rollbackInstallation({
+    current: path.join(temp, "integral/current"),
+    previousLink: undefined,
+    switched: false,
+    actions: [
+      { kind: "created", file: created, installedContent: "installer content\n" },
+      { kind: "replaced", file: replaced, backup, installedContent: "installer content\n" },
+    ],
+  })
+  assert.equal(errors.length, 2)
+  assert.match(errors.join("\n"), /changed after installation/)
+  assert.equal(await readFile(created, "utf8"), "concurrent user edit\n")
+  assert.equal(await readFile(replaced, "utf8"), "concurrent replacement edit\n")
+  assert.equal(await readFile(backup, "utf8"), "pre-install user content\n")
 })
 
 function git(repo, ...args) {
@@ -160,6 +291,8 @@ test("installer preserves user config, migrates old files, updates atomically, a
   await mkdir(path.join(configDir, "plugins"), { recursive: true })
   await symlink(path.join(fixture, "plugins/integral-model-switch"), path.join(configDir, "plugins/integral-model-switch"), "junction")
   await symlink(path.join(fixture, "plugins/integral-sidebar"), path.join(configDir, "plugins/integral-sidebar"), "junction")
+  await symlink(path.join(fixture, "commands/integral-learn-init.py"), path.join(configDir, "commands/integral-learn-init.py"))
+  await symlink(path.join(fixture, "commands/integral-modelos-data.py"), path.join(configDir, "commands/integral-modelos-data.py"))
 
   const learn = "# My private memory\n\n- keep unchanged\n"
   await writeFile(path.join(configDir, "LEARN.md"), learn)
@@ -173,21 +306,32 @@ test("installer preserves user config, migrates old files, updates atomically, a
   "model": "provider/model",
   "instructions": ["custom.md"],
   "agents": { "integral": { "description": "user description", "other": true } },
-  "plugins": ["other-plugin", "./plugins/integral-model-switch"],
+  "plugins": ["other-plugin", "./plugins/integral-model-switch", {
+    "package": "./plugins/integral-model-switch",
+    "options": { "migrationMarker": "preserve-one-entry" }
+  }],
   "experimental": { "customFeature": true }
 }
 `
   await writeFile(path.join(configDir, "opencode.jsonc"), configText)
+  const canonicalSidebarPlugin = path.join(configDir, "integral/current/plugins/integral-sidebar")
   await writeFile(path.join(configDir, "cli.json"), `{
   // Preserve CLI config.
   "theme": { "name": "user-theme" },
-  "plugins": ["other-cli-plugin"]
+  "plugins": ["other-cli-plugin", {
+    "package": "./plugins/integral-sidebar",
+    "options": { "customOption": true }
+  }, {
+    "package": ${JSON.stringify(canonicalSidebarPlugin)},
+    "options": { "duplicateOption": true }
+  }]
 }
 `)
 
   const script = path.join(fixture, "bin/integral.js")
   const first = runInstaller(script, "--config-dir", configDir)
   assert.match(first, /installed and verified/)
+  assert.equal(JSON.parse(await readFile(path.join(configDir, "integral/current/package.json"), "utf8")).type, "module")
   const serverText = await readFile(path.join(configDir, "opencode.jsonc"), "utf8")
   const server = jsoncParser.parse(serverText)
   assert.ok(serverText.includes("// Preserve user settings and comments."))
@@ -198,17 +342,36 @@ test("installer preserves user config, migrates old files, updates atomically, a
   assert.equal(server.agents.integral.mode, "primary")
   assert.equal(server.experimental.customFeature, true)
   assert.equal(server.experimental.todo, true)
-  assert.ok(server.plugins.includes(path.join(configDir, "integral/current/plugins/integral-model-switch")))
+  const serverPlugin = path.join(configDir, "integral/current/plugins/integral-model-switch")
+  const serverPlugins = server.plugins.filter((entry) =>
+    (typeof entry === "string" ? entry : entry.package) === serverPlugin,
+  )
+  assert.equal(serverPlugins.length, 1)
+  assert.equal(serverPlugins[0].options.migrationMarker, "preserve-one-entry")
   const cliText = await readFile(path.join(configDir, "cli.json"), "utf8")
   const cli = jsoncParser.parse(cliText)
   assert.ok(cliText.includes("// Preserve CLI config."))
   assert.equal(cli.theme.name, "user-theme")
-  assert.ok(cli.plugins.some((entry) => entry.package === path.join(configDir, "integral/current/plugins/integral-sidebar")))
+  assert.equal(cli.plugins.filter((entry) => entry.package === canonicalSidebarPlugin).length, 1)
   assert.equal(cli.plugins[1].options.configDir, configDir)
+  assert.equal(cli.plugins[1].options.customOption, true)
   assert.equal(await readFile(path.join(configDir, "LEARN.md"), "utf8"), learn)
   assert.notEqual(await readFile(path.join(configDir, "agents/integral.md"), "utf8"), originalAgent)
   assert.notEqual(await readFile(path.join(configDir, "commands/integral-modelos.md"), "utf8"), originalCommand)
   assert.equal(await lstat(path.join(configDir, "agents/integral.md")).then((stat) => stat.isSymbolicLink()), false)
+
+  const commonJsProject = path.join(temp, "commonjs-project")
+  await mkdir(commonJsProject)
+  await writeFile(path.join(commonJsProject, "package.json"), '{"type":"commonjs"}\n')
+  const installedLearnHelper = path.join(configDir, "integral/current/commands/integral-learn-init.js")
+  const helperCode = `import(${JSON.stringify(pathToFileURL(installedLearnHelper).href)}).then(m=>m.main({configDir:${JSON.stringify(configDir)}}))`
+  const helperRun = spawnSync(process.execPath, ["-e", helperCode], {
+    cwd: commonJsProject,
+    encoding: "utf8",
+    timeout: 15_000,
+  })
+  assert.equal(helperRun.status, 0, `${helperRun.stdout}\n${helperRun.stderr}`)
+  assert.match(await readFile(path.join(commonJsProject, ".opencode/LEARN.md"), "utf8"), /^# Project memory/m)
 
   const backupRoot = path.join(configDir, ".integral-backups")
   const backups = await readdir(backupRoot)
@@ -218,6 +381,8 @@ test("installer preserves user config, migrates old files, updates atomically, a
   assert.equal(await readFile(path.join(saved, "commands/integral-modelos.md"), "utf8"), originalCommand)
   assert.equal(await readlink(path.join(saved, "plugins/integral-model-switch")), path.join(fixture, "plugins/integral-model-switch"))
   assert.equal(await readlink(path.join(saved, "plugins/integral-sidebar")), path.join(fixture, "plugins/integral-sidebar"))
+  assert.equal(await readlink(path.join(saved, "commands/integral-learn-init.py")), path.join(fixture, "commands/integral-learn-init.py"))
+  assert.equal(await readlink(path.join(saved, "commands/integral-modelos-data.py")), path.join(fixture, "commands/integral-modelos-data.py"))
   assert.equal(await readFile(path.join(configDir, "LEARN.md"), "utf8"), learn)
 
   const current = path.join(configDir, "integral/current")
@@ -257,6 +422,45 @@ test("dry run and invalid options do not create the target configuration", async
     "--check",
   ], { encoding: "utf8" })
   assert.equal(failedCheck.status, 1)
+})
+
+test("npm package contains only the explicitly approved distribution files", async (t) => {
+  const { fixture } = await makePackageFixture(t)
+  const decoys = [
+    ".env",
+    "AGENTS.md",
+    "commands/LEARN.md",
+    "commands/private-token.json",
+    "plugins/integral-sidebar/private-token.json",
+  ]
+  for (const relative of decoys) {
+    const file = path.join(fixture, relative)
+    await mkdir(path.dirname(file), { recursive: true })
+    await writeFile(file, "SYNTHETIC_SECRET_DO_NOT_PACKAGE\n")
+  }
+  const result = spawnSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
+    cwd: fixture,
+    encoding: "utf8",
+    timeout: 120_000,
+  })
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+  const packed = JSON.parse(result.stdout)[0].files.map((entry) => entry.path).sort()
+  assert.deepEqual(packed, [
+    "README.md",
+    "agents/integral.md",
+    "bin/integral.js",
+    "commands/integral-init.md",
+    "commands/integral-learn-init.js",
+    "commands/integral-learn.md",
+    "commands/integral-modelos-data.js",
+    "commands/integral-modelos.md",
+    "lib/installer.js",
+    "package.json",
+    "plugins/integral-model-switch/index.js",
+    "plugins/integral-model-switch/package.json",
+    "plugins/integral-sidebar/package.json",
+    "plugins/integral-sidebar/tui.tsx",
+  ])
 })
 
 test("installed agent and plugin registrations are discovered by OpenCode when available", async (t) => {

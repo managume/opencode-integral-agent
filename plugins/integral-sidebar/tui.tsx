@@ -1,5 +1,5 @@
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, readFileSync, watch } from "node:fs"
 import { homedir } from "node:os"
 import path from "node:path"
 import { createEffect, createSignal, For, onCleanup, Show } from "solid-js"
@@ -61,10 +61,14 @@ function Sidebar(props: {
   const [revision, setRevision] = createSignal(0)
   const theme = context.theme
 
+  const locationDirectory = () => {
+    const session = props.sessionID ? context.data.session.get(props.sessionID) as any : undefined
+    return session?.location?.directory || session?.directory || context.location?.directory || process.cwd()
+  }
+
   const directory = () => {
     revision()
-    const session = props.sessionID ? context.data.session.get(props.sessionID) as any : undefined
-    return session?.directory || context.location?.directory || process.cwd()
+    return locationDirectory()
   }
 
   const projectLearnPath = () => findUp(directory(), (dir) => {
@@ -95,8 +99,35 @@ function Sidebar(props: {
   }
 
   createEffect(() => {
-    const timer = setInterval(() => setRevision((value) => value + 1), 2000)
-    onCleanup(() => clearInterval(timer))
+    revision()
+    const current = locationDirectory()
+    const projectRoot = findUp(current, (dir) => existsSync(path.join(dir, ".git")))
+    const root = projectRoot ?? current
+    const projectMemory = findUp(current, (dir) => {
+      const candidate = path.join(dir, ".opencode", "LEARN.md")
+      return existsSync(candidate) ? candidate : undefined
+    })
+    const projectInstructions = findUp(current, (dir) => {
+      const candidate = path.join(dir, "AGENTS.md")
+      return existsSync(candidate) ? candidate : undefined
+    })
+    const directories = new Set([
+      path.dirname(props.globalLearnPath),
+      root,
+      path.join(root, ".opencode"),
+      ...(projectMemory ? [path.dirname(projectMemory)] : []),
+      ...(projectInstructions ? [path.dirname(projectInstructions)] : []),
+    ])
+    const watchers: ReturnType<typeof watch>[] = []
+    for (const dir of directories) {
+      if (!existsSync(dir)) continue
+      try {
+        const watcher = watch(dir, { persistent: false }, () => setRevision((value) => value + 1))
+        watcher.on("error", () => watcher.close())
+        watchers.push(watcher)
+      } catch {}
+    }
+    onCleanup(() => watchers.forEach((watcher) => watcher.close()))
   })
 
   return (

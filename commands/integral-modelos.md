@@ -17,12 +17,12 @@ Once the project is ready, analyze pending work and tasks remaining in each phas
 ## OpenCode data
 
 Configured providers. The output is limited to IDs and names to avoid exposing settings or credentials:
-!`node -e "import(Buffer.from('__INTEGRAL_MODELS_HELPER_URL__','base64').toString()).then(m=>m.main(['providers']))"`
+!`node -e "import(Buffer.from('__INTEGRAL_MODELS_HELPER_URL__','base64').toString()).then(m=>m.main(['providers',process.cwd()]))"`
 
 ## Evaluation
 
 1. After the provider is selected, execute the installed Node.js helper with `models`:
-   `node -e "import(Buffer.from('__INTEGRAL_MODELS_HELPER_URL__','base64').toString()).then(m=>m.main(['models']))"`
+   `node -e "import(Buffer.from('__INTEGRAL_MODELS_HELPER_URL__','base64').toString()).then(m=>m.main(['models',process.cwd()]))"`
    It queries the catalog and returns only non-sensitive metadata for configured providers; use only the entries for the provider selected by the user. Evaluate **all** available chat models from that provider, not just favorites. Do not switch or assume a provider. For each relevant model and variant, examine its name, capabilities, modalities, context, catalog cost, and other technical evidence. Exclude unavailable models and do not infer unsupported capabilities.
 2. Continue external research on Artificial Analysis: open `https://artificialanalysis.ai/models` and follow the pages for all relevant models and variants from the chosen provider. Do not replace this source or start with a generic web search elsewhere.
    - Collect only published metrics: relevant indexes and benchmarks (e.g. coding/agentic), cost, time per task/latency, context window, and modalities. Record the variant, access date, and specific links.

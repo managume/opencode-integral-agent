@@ -16,12 +16,19 @@
     "npm": ">=7"
   },
   "files": [
-    "agents/",
-    "bin/",
-    "commands/",
-    "lib/",
-    "plugins/",
-    "README.md"
+    "README.md",
+    "agents/integral.md",
+    "bin/integral.js",
+    "commands/integral-init.md",
+    "commands/integral-learn.md",
+    "commands/integral-modelos.md",
+    "commands/integral-learn-init.js",
+    "commands/integral-modelos-data.js",
+    "lib/installer.js",
+    "plugins/integral-model-switch/index.js",
+    "plugins/integral-model-switch/package.json",
+    "plugins/integral-sidebar/package.json",
+    "plugins/integral-sidebar/tui.tsx"
   ],
   "scripts": {
     "test": "node --test"

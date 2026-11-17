@@ -40,13 +40,22 @@ export async function main(options = {}) {
   if (failed) process.exitCode = 1
 }
 
-async function projectRoot(cwd) {
-  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+export function projectRoot(cwd, run = spawnSync) {
+  const result = run("git", ["rev-parse", "--show-toplevel"], {
     cwd,
     encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
+    stdio: ["ignore", "pipe", "pipe"],
+    timeout: 5_000,
   })
-  return result.status === 0 ? path.resolve(result.stdout.trim()) : cwd
+  if (result.error?.code === "ENOENT") return cwd
+  if (result.error) throw new Error(`Could not determine the Git project root: ${result.error.message}`)
+  if (result.status === 0) {
+    const root = result.stdout.trim()
+    if (!root) throw new Error("Git returned an empty project root.")
+    return path.resolve(root)
+  }
+  if (/not a git repository|not inside a work tree/i.test(result.stderr ?? "")) return cwd
+  throw new Error(`Git could not determine the project root (exit ${result.status}).`)
 }
 
 async function createIfMissing(file, content) {
