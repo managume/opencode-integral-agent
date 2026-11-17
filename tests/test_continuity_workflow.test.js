@@ -12,7 +12,10 @@ import { rollbackInstallation } from "../lib/installer.js"
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const agent = await readFile(path.join(root, "agents/integral.md"), "utf8")
-const init = await readFile(path.join(root, "commands/integral-init.md"), "utf8")
+const start = await readFile(path.join(root, "commands/integral-start.md"), "utf8")
+const audit = await readFile(path.join(root, "commands/integral-audit.md"), "utf8")
+const release = await readFile(path.join(root, "commands/integral-release.md"), "utf8")
+const doctor = await readFile(path.join(root, "commands/integral-doctor.md"), "utf8")
 const readme = await readFile(path.join(root, "README.md"), "utf8")
 
 test("Integral instructions require persistent, verified completion", () => {
@@ -27,6 +30,11 @@ test("Integral instructions require persistent, verified completion", () => {
     "pending, active, delivered, verified, and integrated",
     "allow useful follow-up or further delegation",
     "Integral reviews each delivery and diff",
+    "Do not run the full suite or browser automation automatically",
+    "Defaults: at most two concurrent delegated writers",
+    "two consecutive attempts without progress",
+    "OpenCode does not provide a reliable token budget",
+    "Save only durable, useful collaboration preferences",
   ]) assert.ok(agent.includes(phrase), `missing instruction: ${phrase}`)
 })
 
@@ -38,12 +46,39 @@ test("parallel writers require separate verified worktrees and central integrati
     "Integral reviews each delivery",
     "one writer owns each shared file",
   ]) assert.ok(agent.includes(phrase), `missing instruction: ${phrase}`)
-  assert.ok(readme.includes("un worktree y una rama propios"))
+  assert.ok(readme.includes("worktrees separados"))
 })
 
 test("project initialization captures branch policy and excludes checkpoints", () => {
-  assert.ok(init.includes("never assume the destination branch"))
-  assert.ok(init.includes("Add `/.opencode/checkpoints/`"))
+  assert.ok(start.includes("optional"))
+  assert.ok(start.includes("without running it first"))
+  assert.ok(start.includes("Do not create application code"))
+  assert.ok(start.includes("Do not run external model research"))
+})
+
+test("the four intervention commands preserve safe and proportional behavior", async () => {
+  for (const [name, content] of [["audit", audit], ["release", release], ["doctor", doctor]]) {
+    assert.ok(content.includes("agent: integral"))
+  }
+  assert.match(audit, /description:.*Audit/)
+  assert.match(release, /description:.*release/i)
+  assert.match(doctor, /description:.*Diagnose/i)
+  assert.ok(audit.includes("Do not edit, generate, format, install, delete, stage, commit"))
+  assert.ok(audit.includes("read-only"))
+  assert.ok(release.includes("Do not silently expand scope"))
+  assert.ok(release.includes("Playwright"))
+  assert.ok(doctor.includes("Do not change project application code"))
+  assert.ok(doctor.includes("credentials"))
+
+  const commands = (await readdir(path.join(root, "commands"))).filter((name) => name.endsWith(".md")).sort()
+  assert.deepEqual(commands, [
+    "integral-audit.md",
+    "integral-doctor.md",
+    "integral-release.md",
+    "integral-start.md",
+  ])
+  assert.ok(readme.includes("`/integral-audit`"))
+  assert.ok(readme.includes("no instala una UI de seguimiento paralela"))
 })
 
 test("model catalog queries are bound to the project and strip arbitrary variant data", async () => {
@@ -263,7 +298,7 @@ test("conflicts remain visible with both sides intact", async (t) => {
 function runInstaller(script, ...args) {
   const result = spawnSync(process.execPath, [script, ...args], { encoding: "utf8", timeout: 120_000 })
   assert.equal(result.status, 0, `installer failed:\n${result.stdout}\n${result.stderr}`)
-  return result.stdout
+  return `${result.stdout}${result.stderr}`
 }
 
 async function makePackageFixture(t) {
@@ -300,6 +335,8 @@ test("installer preserves user config, migrates old files, updates atomically, a
   await writeFile(path.join(configDir, "agents/integral.md"), originalAgent)
   const originalCommand = "# My customized command\n"
   await writeFile(path.join(configDir, "commands/integral-modelos.md"), originalCommand)
+  await writeFile(path.join(configDir, "commands/integral-init.md"), "# Previous Integral init\n")
+  await writeFile(path.join(configDir, "commands/integral-learn.md"), "# Previous Integral learn\n")
   const configText = `{
   "$schema": "https://opencode.ai/config.json",
   // Preserve user settings and comments.
@@ -314,7 +351,6 @@ test("installer preserves user config, migrates old files, updates atomically, a
 }
 `
   await writeFile(path.join(configDir, "opencode.jsonc"), configText)
-  const canonicalSidebarPlugin = path.join(configDir, "integral/current/plugins/integral-sidebar")
   await writeFile(path.join(configDir, "cli.json"), `{
   // Preserve CLI config.
   "theme": { "name": "user-theme" },
@@ -322,7 +358,7 @@ test("installer preserves user config, migrates old files, updates atomically, a
     "package": "./plugins/integral-sidebar",
     "options": { "customOption": true }
   }, {
-    "package": ${JSON.stringify(canonicalSidebarPlugin)},
+    "package": ${JSON.stringify(path.join(configDir, "integral/current/plugins/integral-sidebar"))},
     "options": { "duplicateOption": true }
   }]
 }
@@ -352,12 +388,13 @@ test("installer preserves user config, migrates old files, updates atomically, a
   const cli = jsoncParser.parse(cliText)
   assert.ok(cliText.includes("// Preserve CLI config."))
   assert.equal(cli.theme.name, "user-theme")
-  assert.equal(cli.plugins.filter((entry) => entry.package === canonicalSidebarPlugin).length, 1)
-  assert.equal(cli.plugins[1].options.configDir, configDir)
-  assert.equal(cli.plugins[1].options.customOption, true)
+  assert.deepEqual(cli.plugins, ["other-cli-plugin"])
+  assert.equal(await readFile(path.join(configDir, "commands/integral-start.md"), "utf8"), await readFile(path.join(fixture, "commands/integral-start.md"), "utf8"))
+  for (const oldCommand of ["integral-init.md", "integral-learn.md", "integral-modelos.md"]) {
+    await assert.rejects(lstat(path.join(configDir, "commands", oldCommand)), { code: "ENOENT" })
+  }
   assert.equal(await readFile(path.join(configDir, "LEARN.md"), "utf8"), learn)
   assert.notEqual(await readFile(path.join(configDir, "agents/integral.md"), "utf8"), originalAgent)
-  assert.notEqual(await readFile(path.join(configDir, "commands/integral-modelos.md"), "utf8"), originalCommand)
   assert.equal(await lstat(path.join(configDir, "agents/integral.md")).then((stat) => stat.isSymbolicLink()), false)
 
   const commonJsProject = path.join(temp, "commonjs-project")
@@ -383,6 +420,8 @@ test("installer preserves user config, migrates old files, updates atomically, a
   assert.equal(await readlink(path.join(saved, "plugins/integral-sidebar")), path.join(fixture, "plugins/integral-sidebar"))
   assert.equal(await readlink(path.join(saved, "commands/integral-learn-init.py")), path.join(fixture, "commands/integral-learn-init.py"))
   assert.equal(await readlink(path.join(saved, "commands/integral-modelos-data.py")), path.join(fixture, "commands/integral-modelos-data.py"))
+  assert.equal(await readFile(path.join(saved, "commands/integral-init.md"), "utf8"), "# Previous Integral init\n")
+  assert.equal(await readFile(path.join(saved, "commands/integral-learn.md"), "utf8"), "# Previous Integral learn\n")
   assert.equal(await readFile(path.join(configDir, "LEARN.md"), "utf8"), learn)
 
   const current = path.join(configDir, "integral/current")
@@ -394,15 +433,124 @@ test("installer preserves user config, migrates old files, updates atomically, a
 
   const packagePath = path.join(fixture, "package.json")
   const manifest = JSON.parse(await readFile(packagePath, "utf8"))
-  manifest.version = "1.0.1"
+  manifest.version = "2.0.1"
   await writeFile(packagePath, `${JSON.stringify(manifest, null, 2)}\n`)
-  await writeFile(path.join(fixture, "agents/integral.md"), `${await readFile(path.join(fixture, "agents/integral.md"), "utf8")}\n<!-- release 1.0.1 -->\n`)
-  assert.match(runInstaller(script, "--config-dir", configDir), /1\.0\.1 installed and verified/)
+  await writeFile(path.join(fixture, "agents/integral.md"), `${await readFile(path.join(fixture, "agents/integral.md"), "utf8")}\n<!-- release 2.0.1 -->\n`)
+  assert.match(runInstaller(script, "--config-dir", configDir), /2\.0\.1 installed and verified/)
   assert.notEqual(await readlink(current), oldRelease)
   assert.ok(await lstat(path.join(configDir, "integral", oldRelease)))
-  assert.ok((await readFile(path.join(configDir, "agents/integral.md"), "utf8")).includes("release 1.0.1"))
+  assert.ok((await readFile(path.join(configDir, "agents/integral.md"), "utf8")).includes("release 2.0.1"))
   assert.equal(await readFile(path.join(configDir, "LEARN.md"), "utf8"), learn)
   assert.equal(runInstaller(script, "--config-dir", configDir, "--check").includes("package verified"), true)
+
+  runInstaller(script, "--config-dir", configDir, "--uninstall")
+  const uninstalledServer = jsoncParser.parse(await readFile(path.join(configDir, "opencode.jsonc"), "utf8"))
+  assert.deepEqual(uninstalledServer.plugins, [
+    "other-plugin",
+    "./plugins/integral-model-switch",
+    { package: "./plugins/integral-model-switch", options: { migrationMarker: "preserve-one-entry" } },
+  ])
+  assert.equal(uninstalledServer.agents.integral.description, "user description")
+  assert.equal(uninstalledServer.agents.integral.other, true)
+  assert.equal(uninstalledServer.agents.integral.mode, undefined)
+  const uninstalledCli = jsoncParser.parse(await readFile(path.join(configDir, "cli.json"), "utf8"))
+  assert.deepEqual(uninstalledCli.plugins, [
+    "other-cli-plugin",
+    { package: "./plugins/integral-sidebar", options: { customOption: true } },
+    {
+      package: path.join(configDir, "integral/current/plugins/integral-sidebar"),
+      options: { duplicateOption: true },
+    },
+  ])
+})
+
+test("uninstall removes Integral registrations and backs up its files without deleting user data", async (t) => {
+  const { temp, fixture } = await makePackageFixture(t)
+  const configDir = path.join(temp, "xdg", "opencode")
+  const script = path.join(fixture, "bin/integral.js")
+  await mkdir(path.join(configDir, "commands"), { recursive: true })
+  await writeFile(path.join(configDir, "commands/my-command.md"), "user command\n")
+  runInstaller(script, "--config-dir", configDir)
+
+  const learn = "# User memory\n\n- preserve me\n"
+  await writeFile(path.join(configDir, "LEARN.md"), learn)
+  const configPath = path.join(configDir, "opencode.json")
+  const installedConfig = jsoncParser.parse(await readFile(configPath, "utf8"))
+  installedConfig.agents.integral.description = "User customization after installation"
+  installedConfig.experimental.todo = false
+  await writeFile(configPath, `${JSON.stringify(installedConfig, null, 2)}\n`)
+  const projectMemory = path.join(temp, ".opencode/LEARN.md")
+  const checkpoint = path.join(temp, ".opencode/checkpoints/integral-task.md")
+  await mkdir(path.dirname(checkpoint), { recursive: true })
+  await writeFile(projectMemory, "# Project memory\n")
+  await writeFile(checkpoint, "verified checkpoint\n")
+
+  const output = runInstaller(script, "--config-dir", configDir, "--uninstall")
+  assert.match(output, /uninstalled/)
+  assert.equal(await readFile(path.join(configDir, "LEARN.md"), "utf8"), learn)
+  assert.equal(await readFile(projectMemory, "utf8"), "# Project memory\n")
+  assert.equal(await readFile(checkpoint, "utf8"), "verified checkpoint\n")
+  assert.equal(await readFile(path.join(configDir, "commands/my-command.md"), "utf8"), "user command\n")
+  for (const command of [
+    "integral-start.md",
+    "integral-audit.md",
+    "integral-release.md",
+    "integral-doctor.md",
+  ]) await assert.rejects(lstat(path.join(configDir, "commands", command)), { code: "ENOENT" })
+  await assert.rejects(lstat(path.join(configDir, "integral/current")), { code: "ENOENT" })
+  await assert.rejects(lstat(path.join(configDir, "integral/releases")), { code: "ENOENT" })
+
+  const server = jsoncParser.parse(await readFile(configPath, "utf8"))
+  assert.equal(server.agents.integral.description, "User customization after installation")
+  assert.equal(server.agents.integral.mode, undefined)
+  assert.equal(server.experimental.todo, false)
+  assert.ok(!server.plugins?.some((entry) => String(entry).includes("integral-model-switch")))
+  assert.ok(server.instructions.includes(path.join(configDir, "LEARN.md")))
+  assert.ok(!server.instructions.includes(".opencode/LEARN.md"))
+  const backups = await readdir(path.join(configDir, ".integral-backups"))
+  assert.equal(backups.length, 1)
+  const saved = path.join(configDir, ".integral-backups", backups[0], "files")
+  assert.ok(await lstat(path.join(saved, "commands/integral-start.md")))
+  assert.ok(await lstat(path.join(saved, "integral/current")))
+
+  assert.match(runInstaller(script, "--config-dir", configDir, "--uninstall"), /not installed/)
+})
+
+test("uninstall restores a fresh empty configuration and backs up installer-created memory", async (t) => {
+  const { temp, fixture } = await makePackageFixture(t)
+  const configDir = path.join(temp, "xdg", "opencode")
+  const script = path.join(fixture, "bin/integral.js")
+  runInstaller(script, "--config-dir", configDir)
+
+  const originalLearn = await readFile(path.join(configDir, "LEARN.md"), "utf8")
+  assert.match(originalLearn, /^# Memoria global/)
+  runInstaller(script, "--config-dir", configDir, "--uninstall")
+
+  const server = jsoncParser.parse(await readFile(path.join(configDir, "opencode.json"), "utf8"))
+  assert.deepEqual(server, {})
+  await assert.rejects(lstat(path.join(configDir, "LEARN.md")), { code: "ENOENT" })
+  const backups = await readdir(path.join(configDir, ".integral-backups"))
+  const savedLearn = path.join(configDir, ".integral-backups", backups[0], "files/LEARN.md")
+  assert.equal(await readFile(savedLearn, "utf8"), originalLearn)
+})
+
+test("uninstall preserves ambiguous settings from installations without ownership metadata", async (t) => {
+  const { temp, fixture } = await makePackageFixture(t)
+  const configDir = path.join(temp, "xdg", "opencode")
+  const script = path.join(fixture, "bin/integral.js")
+  runInstaller(script, "--config-dir", configDir)
+  const configPath = path.join(configDir, "opencode.json")
+  const learnPath = path.join(configDir, "LEARN.md")
+  const originalLearn = await readFile(learnPath, "utf8")
+  await rm(path.join(configDir, "integral/install-state.json"))
+
+  const output = runInstaller(script, "--config-dir", configDir, "--uninstall")
+  assert.match(output, /predates the ownership record/)
+  assert.equal(await readFile(learnPath, "utf8"), originalLearn)
+  const server = jsoncParser.parse(await readFile(configPath, "utf8"))
+  assert.equal(server.agents.integral.mode, "primary")
+  assert.ok(server.instructions.includes(learnPath))
+  assert.ok(!server.plugins.some((entry) => String(entry).includes("integral-model-switch")))
 })
 
 test("dry run and invalid options do not create the target configuration", async (t) => {
@@ -449,21 +597,20 @@ test("npm package contains only the explicitly approved distribution files", asy
     "README.md",
     "agents/integral.md",
     "bin/integral.js",
-    "commands/integral-init.md",
+    "commands/integral-audit.md",
+    "commands/integral-doctor.md",
     "commands/integral-learn-init.js",
-    "commands/integral-learn.md",
     "commands/integral-modelos-data.js",
-    "commands/integral-modelos.md",
+    "commands/integral-release.md",
+    "commands/integral-start.md",
     "lib/installer.js",
     "package.json",
     "plugins/integral-model-switch/index.js",
     "plugins/integral-model-switch/package.json",
-    "plugins/integral-sidebar/package.json",
-    "plugins/integral-sidebar/tui.tsx",
   ])
 })
 
-test("installed agent and plugin registrations are discovered by OpenCode when available", async (t) => {
+test("OpenCode recognizes Integral's agent, managed config, and installed command files", async (t) => {
   const probe = spawnSync("opencode", ["--version"], { encoding: "utf8", timeout: 10_000 })
   if (probe.error || probe.status !== 0) {
     t.skip("OpenCode CLI is not installed in this test environment.")
@@ -496,5 +643,20 @@ test("installed agent and plugin registrations are discovered by OpenCode when a
     timeout: 120_000,
   })
   assert.equal(plugins.status, 0, plugins.stderr)
-  assert.ok(plugins.stdout.includes(path.join(configDir, "integral/current/plugins/integral-sidebar")))
+  assert.ok(!plugins.stdout.includes("integral-sidebar"))
+
+  const config = spawnSync("opencode", ["debug", "config", "--standalone"], {
+    cwd: temp,
+    env,
+    encoding: "utf8",
+    timeout: 120_000,
+  })
+  assert.equal(config.status, 0, config.stderr)
+  const configSources = JSON.parse(config.stdout)
+  assert.ok(configSources.some((source) => source.path === path.join(configDir, "opencode.json")))
+  const serverConfig = configSources.find((source) => source.path === path.join(configDir, "opencode.json"))
+  assert.ok(serverConfig.info.plugins.includes(path.join(configDir, "integral/current/plugins/integral-model-switch")))
+  for (const command of ["integral-start.md", "integral-audit.md", "integral-release.md", "integral-doctor.md"]) {
+    assert.ok(await lstat(path.join(configDir, "commands", command)))
+  }
 })

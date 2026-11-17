@@ -15,18 +15,16 @@
 !agents/
 !agents/integral.md
 !commands/
-!commands/integral-modelos.md
-!commands/integral-learn.md
-!commands/integral-init.md
+!commands/integral-start.md
+!commands/integral-audit.md
+!commands/integral-release.md
+!commands/integral-doctor.md
 !commands/integral-learn-init.js
 !commands/integral-modelos-data.js
 !plugins/
 !plugins/integral-model-switch/
 !plugins/integral-model-switch/package.json
 !plugins/integral-model-switch/index.js
-!plugins/integral-sidebar/
-!plugins/integral-sidebar/package.json
-!plugins/integral-sidebar/tui.tsx
 
 # Defensa explícita para secretos, datos locales y credenciales accidentales.
 .env

@@ -1,6 +1,6 @@
 {
   "name": "integral-opencode",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Install and update the Integral OpenCode agent, commands, and plugins",
   "repository": {
     "type": "git",
@@ -19,16 +19,15 @@
     "README.md",
     "agents/integral.md",
     "bin/integral.js",
-    "commands/integral-init.md",
-    "commands/integral-learn.md",
-    "commands/integral-modelos.md",
+    "commands/integral-start.md",
+    "commands/integral-audit.md",
+    "commands/integral-release.md",
+    "commands/integral-doctor.md",
     "commands/integral-learn-init.js",
     "commands/integral-modelos-data.js",
     "lib/installer.js",
     "plugins/integral-model-switch/index.js",
-    "plugins/integral-model-switch/package.json",
-    "plugins/integral-sidebar/package.json",
-    "plugins/integral-sidebar/tui.tsx"
+    "plugins/integral-model-switch/package.json"
   ],
   "scripts": {
     "test": "node --test"
