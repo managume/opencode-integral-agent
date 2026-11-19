@@ -59,6 +59,8 @@ test("native goal policy is selective and avoids a second continuity mechanism",
   assert.ok(readme.includes("cuando un hito funcional de varios pasos"))
   assert.ok(readme.includes("No se inicia un objetivo por cada petición"))
   assert.ok(readme.includes("ni crea una segunda checklist, bucle, plugin o revisor"))
+  assert.ok(readme.includes("no es una ubicación de ejecución"))
+  assert.ok(readme.includes("no deja enlaces activos desde OpenCode al checkout"))
   for (const phrase of [
     "Use ordinary execution for small fixes",
     "An explicit user `/goal` request always takes precedence",
@@ -392,7 +394,9 @@ test("installer preserves user config, migrates old files, updates atomically, a
   const learn = "# My private memory\n\n- keep unchanged\n"
   await writeFile(path.join(configDir, "LEARN.md"), learn)
   const originalAgent = "# My customized Integral agent\n"
-  await writeFile(path.join(configDir, "agents/integral.md"), originalAgent)
+  const originalAgentSource = path.join(temp, "original-agent.md")
+  await writeFile(originalAgentSource, originalAgent)
+  await symlink(originalAgentSource, path.join(configDir, "agents/integral.md"))
   const originalCommand = "# My customized command\n"
   await writeFile(path.join(configDir, "commands/integral-modelos.md"), originalCommand)
   await writeFile(path.join(configDir, "commands/integral-init.md"), "# Previous Integral init\n")
@@ -456,6 +460,11 @@ test("installer preserves user config, migrates old files, updates atomically, a
   assert.equal(await readFile(path.join(configDir, "LEARN.md"), "utf8"), learn)
   assert.notEqual(await readFile(path.join(configDir, "agents/integral.md"), "utf8"), originalAgent)
   assert.equal(await lstat(path.join(configDir, "agents/integral.md")).then((stat) => stat.isSymbolicLink()), false)
+  await assert.rejects(lstat(path.join(configDir, "plugins/integral-model-switch")), { code: "ENOENT" })
+  assert.equal(
+    await lstat(path.join(configDir, "integral/current/plugins/integral-model-switch")).then((stat) => stat.isSymbolicLink()),
+    false,
+  )
 
   const commonJsProject = path.join(temp, "commonjs-project")
   await mkdir(commonJsProject)
@@ -476,10 +485,22 @@ test("installer preserves user config, migrates old files, updates atomically, a
   const saved = path.join(backupRoot, backups[0], "files")
   assert.equal(await readFile(path.join(saved, "agents/integral.md"), "utf8"), originalAgent)
   assert.equal(await readFile(path.join(saved, "commands/integral-modelos.md"), "utf8"), originalCommand)
-  assert.equal(await readlink(path.join(saved, "plugins/integral-model-switch")), path.join(fixture, "plugins/integral-model-switch"))
-  assert.equal(await readlink(path.join(saved, "plugins/integral-sidebar")), path.join(fixture, "plugins/integral-sidebar"))
-  assert.equal(await readlink(path.join(saved, "commands/integral-learn-init.py")), path.join(fixture, "commands/integral-learn-init.py"))
-  assert.equal(await readlink(path.join(saved, "commands/integral-modelos-data.py")), path.join(fixture, "commands/integral-modelos-data.py"))
+  assert.equal((await lstat(path.join(saved, "agents/integral.md"))).isSymbolicLink(), false)
+  assert.equal((await lstat(path.join(saved, "plugins/integral-model-switch"))).isSymbolicLink(), false)
+  assert.equal(
+    await readFile(path.join(saved, "plugins/integral-model-switch/index.js"), "utf8"),
+    await readFile(path.join(fixture, "plugins/integral-model-switch/index.js"), "utf8"),
+  )
+  assert.equal((await lstat(path.join(saved, "plugins/integral-sidebar"))).isDirectory(), true)
+  assert.equal((await lstat(path.join(saved, "plugins/integral-sidebar"))).isSymbolicLink(), false)
+  assert.deepEqual(await readdir(path.join(saved, "plugins/integral-sidebar")), [])
+  for (const [relative, target] of [
+    ["commands/integral-learn-init.py", path.join(fixture, "commands/integral-learn-init.py")],
+    ["commands/integral-modelos-data.py", path.join(fixture, "commands/integral-modelos-data.py")],
+  ]) {
+    const record = JSON.parse(await readFile(path.join(saved, relative), "utf8"))
+    assert.deepEqual(record, { __integral_backup_marker: "symlink", target })
+  }
   assert.equal(await readFile(path.join(saved, "commands/integral-init.md"), "utf8"), "# Previous Integral init\n")
   assert.equal(await readFile(path.join(saved, "commands/integral-learn.md"), "utf8"), "# Previous Integral learn\n")
   assert.equal(await readFile(path.join(configDir, "LEARN.md"), "utf8"), learn)

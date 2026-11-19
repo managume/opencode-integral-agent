@@ -50,6 +50,8 @@ npx --yes --prefer-online --package=github:managume/opencode-integral-agent#main
 
 El instalador persistente acepta `--dry-run`, `--check`, `--uninstall` y `--config-dir <path>`. La configuración alternativa se usa con OpenCode cuando `XDG_CONFIG_HOME` apunta a su directorio padre.
 
+El repositorio contiene las fuentes del paquete; no es una ubicación de ejecución. El instalador copia el agente y los comandos a `agents/` y `commands/` de la configuración global, y guarda el plugin dentro de `integral/releases/`. Si sustituye antiguos enlaces simbólicos, conserva el destino como copia independiente o registra su ruta si el destino ya no existe; no deja enlaces activos desde OpenCode al checkout.
+
 ```bash
 npx --yes --prefer-online --package=github:managume/opencode-integral-agent#main integral-opencode --dry-run
 npx --yes --prefer-online --package=github:managume/opencode-integral-agent#main integral-opencode --check
