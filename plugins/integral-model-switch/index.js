@@ -17,7 +17,7 @@ export default Plugin.define({
     await ctx.tool.transform((editor) => {
       editor.add({
         name: "set_integral_phase",
-        description: "Select the assigned model and variant when Integral enters a project phase. Use only for Integral and follow the project's AGENTS.md assignments.",
+        description: "Integral only: select its assigned model and variant when Integral enters a project phase. Other agents must not call this tool; use their configured or currently selected model.",
         input: {
           type: "object",
           properties: {

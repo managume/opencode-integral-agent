@@ -17,6 +17,7 @@ const audit = await readFile(path.join(root, "commands/integral-audit.md"), "utf
 const release = await readFile(path.join(root, "commands/integral-release.md"), "utf8")
 const doctor = await readFile(path.join(root, "commands/integral-doctor.md"), "utf8")
 const readme = await readFile(path.join(root, "README.md"), "utf8")
+const modelSwitch = await readFile(path.join(root, "plugins/integral-model-switch/index.js"), "utf8")
 
 test("Integral instructions require persistent, verified completion", () => {
   for (const phrase of [
@@ -53,6 +54,15 @@ test("Integral instructions require persistent, verified completion", () => {
   ]) assert.ok(agent.includes(phrase), `missing instruction: ${phrase}`)
   assert.ok(!/^steps\s*:/m.test(agent), "Integral must not impose an artificial per-turn step ceiling")
   assert.ok(!readme.includes("limita una respuesta a 16 pasos"))
+})
+
+test("phase switching is exclusive to Integral and denial does not block other agents", () => {
+  assert.ok(agent.includes("`set_integral_phase` is reserved for the Integral agent"))
+  assert.ok(agent.includes("other agents must not call it"))
+  assert.ok(agent.includes("including a denial because the caller is not Integral"))
+  assert.ok(agent.includes("do not turn that tool failure into a task blocker"))
+  assert.ok(modelSwitch.includes("Other agents must not call this tool"))
+  assert.ok(modelSwitch.includes("if (context.agent !== \"integral\")"))
 })
 
 test("native goal policy is selective and avoids a second continuity mechanism", () => {
