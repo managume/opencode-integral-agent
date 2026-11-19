@@ -70,6 +70,31 @@ test("native goal policy is selective and avoids a second continuity mechanism",
   ]) assert.ok(agent.includes(phrase), `missing goal policy: ${phrase}`)
 })
 
+test("task triage keeps simple work direct and gates complex implementation", () => {
+  for (const phrase of [
+    "classify the request by uncertainty, impact, dependencies, and risk",
+    "atomic, very simple, clear, low-risk, reversible task",
+    "Do not do a discovery phase, formal plan",
+    "Treat a request as complex",
+    "first perform a bounded, read-only analysis",
+    "Do not edit, generate, format, install, migrate, or begin implementation during this analysis",
+    "recommended option must explicitly proceed to planning and implementation",
+    "the automatically available free-text option lets the user correct or add to the analysis",
+    "If the native question interface is unavailable",
+    "Wait at this gate",
+    "Once the user approves the analyzed approach",
+    "Do not ask for a second approval of the plan",
+    "Do not impose this gate on a request explicitly limited to an answer",
+    "Honor an explicit user instruction to skip the gate",
+  ]) assert.ok(agent.includes(phrase), `missing triage policy: ${phrase}`)
+  for (const phrase of [
+    "Una tarea atómica, clara y reversible se ejecuta directamente",
+    "análisis acotado de solo lectura",
+    "No modifica el proyecto ni empieza el desarrollo antes de tu confirmación",
+    "sin pedir una segunda aprobación rutinaria",
+  ]) assert.ok(readme.includes(phrase), `missing triage documentation: ${phrase}`)
+})
+
 test("parallel writers require separate verified worktrees and central integration", () => {
   for (const phrase of [
     "one separate Git worktree and branch per writer",
@@ -670,6 +695,7 @@ test("OpenCode recognizes Integral's agent, managed config, and installed comman
   const integral = agents.find((agent) => agent.id === "integral")
   assert.ok(integral, "Integral agent was not discovered")
   assert.ok(integral.system.includes("Completion-driven workflow"))
+  assert.ok(integral.system.includes("Task triage and approval gate"))
   assert.equal(integral.steps, undefined, "Integral must not have a configured per-turn steps ceiling")
 
   const plugins = spawnSync("opencode", ["plugin", "list", "--standalone"], {
