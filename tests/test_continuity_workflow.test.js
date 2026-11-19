@@ -20,7 +20,7 @@ const readme = await readFile(path.join(root, "README.md"), "utf8")
 
 test("Integral instructions require persistent, verified completion", () => {
   for (const phrase of [
-    "Without an active native goal, do not voluntarily end a turn",
+    "Continue until done or demonstrably blocked",
     "task checklist",
     "Resume before replanning",
     "`.opencode/checkpoints/integral-<task-id>.md`",
@@ -35,6 +35,10 @@ test("Integral instructions require persistent, verified completion", () => {
     "two consecutive attempts without progress",
     "OpenCode does not provide a reliable token budget",
     "Save only durable, useful collaboration preferences",
+    "A development request authorizes the complete agreed delivery loop",
+    "Do not ask the user to authorize each phase",
+    "Never claim that a technical limit was reached without evidence",
+    "On a routine tool, test, build, lint, or runtime failure",
     "Treat OpenCode's built-in `/goal` as the only persistent continuation",
     "finish a coherent implementation or verification block and yield normally",
     "Never start a goal in a child session",
@@ -44,8 +48,11 @@ test("Integral instructions require persistent, verified completion", () => {
     "Do not reactivate a paused or cleared objective",
     "Report cost or token consumption only from OpenCode's session/statistics output",
     "let the native goal pause",
-    "steps: 16",
+    "`/goal` is optional and not a prerequisite for autonomy",
+    "Continue until done or demonstrably blocked",
   ]) assert.ok(agent.includes(phrase), `missing instruction: ${phrase}`)
+  assert.ok(!/^steps\s*:/m.test(agent), "Integral must not impose an artificial per-turn step ceiling")
+  assert.ok(!readme.includes("limita una respuesta a 16 pasos"))
 })
 
 test("native goal policy is selective and avoids a second continuity mechanism", () => {
@@ -59,7 +66,7 @@ test("native goal policy is selective and avoids a second continuity mechanism",
     "The native reviewer may then continue or conclude",
     "Do not reactivate a paused or cleared objective",
     "`/goal` state belongs to the OpenCode session",
-    "OpenCode's native review",
+    "native goal reviewer decides whether to request another round",
   ]) assert.ok(agent.includes(phrase), `missing goal policy: ${phrase}`)
 })
 
@@ -94,6 +101,9 @@ test("the four intervention commands preserve safe and proportional behavior", a
   assert.ok(release.includes("Playwright"))
   assert.ok(doctor.includes("Do not change project application code"))
   assert.ok(doctor.includes("credentials"))
+  assert.ok(doctor.includes("effective agent settings"))
+  assert.ok(doctor.includes("especially any `steps` ceiling"))
+  assert.ok(doctor.includes("Distinguish actual platform/provider limits"))
 
   const commands = (await readdir(path.join(root, "commands"))).filter((name) => name.endsWith(".md")).sort()
   assert.deepEqual(commands, [
@@ -660,6 +670,7 @@ test("OpenCode recognizes Integral's agent, managed config, and installed comman
   const integral = agents.find((agent) => agent.id === "integral")
   assert.ok(integral, "Integral agent was not discovered")
   assert.ok(integral.system.includes("Completion-driven workflow"))
+  assert.equal(integral.steps, undefined, "Integral must not have a configured per-turn steps ceiling")
 
   const plugins = spawnSync("opencode", ["plugin", "list", "--standalone"], {
     cwd: temp,
@@ -681,6 +692,7 @@ test("OpenCode recognizes Integral's agent, managed config, and installed comman
   assert.ok(configSources.some((source) => source.path === path.join(configDir, "opencode.json")))
   const serverConfig = configSources.find((source) => source.path === path.join(configDir, "opencode.json"))
   assert.ok(serverConfig.info.plugins.includes(path.join(configDir, "integral/current/plugins/integral-model-switch")))
+  assert.equal(serverConfig.info.experimental.todo, true, "installer must make native task tracking available")
 
   const commandList = spawnSync("opencode", ["api", "get", "/api/command", "--standalone"], {
     cwd: temp,
